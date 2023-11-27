@@ -143,7 +143,7 @@ class ScipyCommitParser(CommitParser[ParseResult, ScipyParserOptions]):
     def get_default_options() -> ScipyParserOptions:
         return ScipyParserOptions()
 
-    def parse(self, commit: Commit) -> ParseResult:
+    def parse(self, commit: Commit) -> ParseResult | list[ParseResult]:
         message = str(commit.message)
         parsed = self.re_parser.match(message)
 

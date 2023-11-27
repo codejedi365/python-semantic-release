@@ -74,7 +74,7 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
     def get_default_options() -> EmojiParserOptions:
         return EmojiParserOptions()
 
-    def parse(self, commit: Commit) -> ParseResult:
+    def parse(self, commit: Commit) -> ParseResult | list[ParseResult]:
         all_emojis = (
             self.options.major_tags + self.options.minor_tags + self.options.patch_tags
         )
