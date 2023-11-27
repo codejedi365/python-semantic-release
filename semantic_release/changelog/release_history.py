@@ -59,15 +59,6 @@ class ReleaseHistory:
         the_version: Version | None = None
 
         for commit in repo.iter_commits():
-            # mypy will be happy if we make this an explicit string
-            commit_message = str(commit.message)
-
-            parse_result = commit_parser.parse(commit)
-            commit_type = (
-                "unknown" if isinstance(parse_result, ParseError) else parse_result.type
-            )
-            log.debug("commit has type %s", commit_type)
-
             for tag, version in all_git_tags_and_versions:
                 if tag.commit == commit:
                     # we have found the latest commit introduced by this tag
@@ -103,6 +94,24 @@ class ReleaseHistory:
 
                     released.setdefault(the_version, release)
                     break
+
+            if len(commit.parents) > 1:
+                # Ignore merge commits
+                log.debug(
+                    "Skipping merge commit %s (%s)",
+                    commit.hexsha,
+                    str(commit.message).replace("\n", " ")[:20],
+                )
+                continue
+
+            # mypy will be happy if we make this an explicit string
+            commit_message = str(commit.message)
+
+            parse_result = commit_parser.parse(commit)
+            commit_type = (
+                "unknown" if isinstance(parse_result, ParseError) else parse_result.type
+            )
+            log.debug("commit has type %s", commit_type)
 
             if any(pat.match(commit_message) for pat in exclude_commit_patterns):
                 log.debug(
