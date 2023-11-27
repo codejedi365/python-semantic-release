@@ -7,9 +7,13 @@ from __future__ import annotations
 
 import logging
 import re
+from copy import deepcopy
+from functools import reduce
 from re import compile as regexp
+from textwrap import dedent
 from typing import TYPE_CHECKING, Tuple
 
+from git.objects.commit import Commit
 from pydantic.dataclasses import dataclass
 
 from semantic_release.commit_parser._base import CommitParser, ParserOptions
@@ -18,7 +22,7 @@ from semantic_release.commit_parser.util import breaking_re, parse_paragraphs
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:
-    from git.objects.commit import Commit
+    from re import Pattern
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +66,7 @@ class AngularParserOptions(ParserOptions):
         "test",
     )
     default_bump_level: LevelBump = LevelBump.NO_RELEASE
+    parse_squash_commits: bool = True
 
     def __post_init__(self) -> None:
         self.tag_to_level = {tag: self.default_bump_level for tag in self.allowed_tags}
@@ -97,16 +102,59 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             ),
             flags=re.DOTALL,
         )
+        self.commit_prefix = regexp(
+            str.join(
+                "",
+                [
+                    r"^(?:%s)" % all_possible_types,
+                    r"(?:\([^)]+\))?",  # optional scope
+                    # TODO: remove ! support as it is not part of the angular commit spec (its part of conventional commits spec)
+                    r"!?:\s+",
+                ],
+            )
+        )
+        self.filters = {
+            "typo-extra-spaces": (regexp(r"(\S)  +(\S)"), r"\1 \2"),
+            "git-header-commit": (
+                regexp(r"^[\t ]*commit [0-9a-f]+$\n?", flags=re.MULTILINE),
+                "",
+            ),
+            "git-header-author": (
+                regexp(r"^[\t ]*Author: .+$\n?", flags=re.MULTILINE),
+                "",
+            ),
+            "git-header-date": (
+                regexp(r"^[\t ]*Date: .+$\n?", flags=re.MULTILINE),
+                "",
+            ),
+            "git-squash-heading": (
+                regexp(
+                    r"^[\t ]*Squashed commit of the following:.*$\n?",
+                    flags=re.MULTILINE,
+                ),
+                "",
+            ),
+            "git-squash-commit-prefix": (
+                regexp(
+                    str.join(
+                        "",
+                        [
+                            r"^(?:[\t ]*[*-][\t ]+|[\t ]+)?",  # bullet points or indentation
+                            r"(%s)\b" % all_possible_types,  # prior to commit type
+                        ],
+                    ),
+                    flags=re.MULTILINE,
+                ),
+                # move commit type to the start of the line
+                r"\1",
+            ),
+        }
 
     @staticmethod
     def get_default_options() -> AngularParserOptions:
         return AngularParserOptions()
 
-    # Maybe this can be cached as an optimization, similar to how
-    # mypy/pytest use their own caching directories, for very large commit
-    # histories?
-    # The problem is the cache likely won't be present in CI environments
-    def parse(self, commit: Commit) -> ParseResult:
+    def _parse(self, commit: Commit) -> ParseResult:
         """
         Attempt to parse the commit message with a regular expression into a
         ParseResult
@@ -155,3 +203,108 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             breaking_descriptions=breaking_descriptions,
             commit=commit,
         )
+
+    # Maybe this can be cached as an optimisation, similar to how
+    # mypy/pytest use their own caching directories, for very large commit
+    # histories?
+    # The problem is the cache likely won't be present in CI environments
+    def parse(self, commit: Commit) -> ParseResult | list[ParseResult]:
+        """
+        Parse a commit message
+
+        If the commit message is a squashed merge commit, it will be split into
+        multiple commits, each of which will be parsed separately. Single commits
+        will be returned as a single ParseResult.
+        """
+        separate_commits: list[Commit] = (
+            self.unsquash_commit(commit)
+            if self.options.parse_squash_commits
+            else [commit]
+        )
+
+        # Since we found multiple angular subjects, parse each one individually
+        return [
+            # parse each of the artificial commits
+            self._parse(artificial_commit)
+            for artificial_commit in separate_commits
+        ]
+
+    def unsquash_commit(self, commit: Commit) -> list[Commit]:
+        # GitHub EXAMPLE:
+        # feat(changelog): add autofit_text_width filter to template environment (#1062)
+        #
+        # This change adds an equivalent style formatter that can apply a text alignment
+        # to a maximum width and also maintain an indent over paragraphs of text
+        #
+        # * docs(changelog-templates): add definition & usage of autofit_text_width template filter
+        #
+        # * test(changelog-context): add test cases to check autofit_text_width filter use
+        #
+        # `git merge --squash` EXAMPLE:
+        # Squashed commit of the following:
+        #
+        # commit 63ec09b9e844e616dcaa7bae35a0b66671b59fbb
+        # Author: codejedi365 <codejedi365@gmail.com>
+        # Date:   Sun Oct 13 12:05:23 2024 -0600
+        #
+        #     feat(release-config): some commit subject
+        #
+        def text_reducer(text: str, filter_pair: tuple[Pattern[str], str]) -> str:
+            """Reduce function to apply mulitple filters to a string"""
+            if not text:  # abort if the paragraph is empty
+                return text
+
+            filter_pattern, replacement = filter_pair
+            return filter_pattern.sub(replacement, text)
+
+        separate_commit_msgs: list[str] = []
+        current_msg = ""
+
+        paragraphs = str(commit.message).replace("\r", "").strip().split("\n\n")
+        for paragraph in paragraphs:
+            # Apply filters to normalize the paragraph
+            clean_paragraph = reduce(text_reducer, self.filters.values(), paragraph)
+
+            # remove any filtered (and now empty) paragraphs (ie. the git headers)
+            if not clean_paragraph.strip():
+                continue
+
+            # Check if the paragraph is the start of a new angular commit
+            if not self.commit_prefix.search(clean_paragraph):
+                # append the paragraph as part of the previous commit message
+                if current_msg:
+                    current_msg += f"\n\n{dedent(clean_paragraph)}"
+                # else: drop the paragraph
+                continue
+
+            # Since we found the start of the new commit, store any previous commit
+            # message separately and start the new commit message
+            if current_msg:
+                separate_commit_msgs.append(current_msg)
+
+            current_msg = clean_paragraph
+
+        # Store the last commit message (if its not empty)
+        if current_msg:
+            separate_commit_msgs.append(current_msg)
+
+        # Return a list of artificial commits (each with a single commit message)
+        return [
+            # create a artificial commit object (copy of original but with modified message)
+            Commit(
+                commit.repo,
+                commit.binsha,
+                author=deepcopy(commit.author),
+                authored_date=commit.authored_date,
+                committer=deepcopy(commit.committer),
+                committed_date=commit.committed_date,
+                message=commit_msg,
+                tree=commit.tree,
+                parents=commit.parents,
+                encoding=commit.encoding,
+                gpgsig=commit.gpgsig,
+                author_tz_offset=commit.author_tz_offset,
+                committer_tz_offset=commit.committer_tz_offset,
+            )
+            for commit_msg in separate_commit_msgs
+        ]
