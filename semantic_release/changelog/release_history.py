@@ -55,14 +55,6 @@ class ReleaseHistory:
         the_version: Version | None = None
 
         for commit in repo.iter_commits():
-            # mypy will be happy if we make this an explicit string
-            commit_message = str(commit.message)
-
-            parse_result = commit_parser.parse(commit)
-            commit_type = (
-                "unknown" if isinstance(parse_result, ParseError) else parse_result.type
-            )
-            log.debug("commit has type %s", commit_type)
 
             for tag, version in all_git_tags_and_versions:
                 if tag.commit == commit:
@@ -104,30 +96,44 @@ class ReleaseHistory:
                     released.setdefault(the_version, release)
                     break
 
-            if any(pat.match(commit_message) for pat in exclude_commit_patterns):
-                log.debug(
-                    "Skipping excluded commit %s (%s)",
-                    commit.hexsha,
-                    commit_message.replace("\n", " ")[:20],
+            # returns a ParseResult or list of ParseResult objects,
+            # it is usually one, but we split a commit if a squashed merge is detected
+            parse_results = commit_parser.parse(commit)
+            if not isinstance(parse_results, list):
+                parse_results = [parse_results]
+
+            # iterate through parsed commits to add to changelog definition
+            for parsed_commit in parse_results:
+                commit_message = str(parsed_commit.commit.message)
+                commit_type = (
+                    "unknown" if isinstance(parsed_commit, ParseError) else parsed_commit.type
                 )
-                continue
+                log.debug("commit has type %s", commit_type)
 
-            if not is_commit_released:
-                log.debug("adding commit %s to unreleased commits", commit.hexsha)
-                unreleased[commit_type].append(parse_result)
-                continue
+                if any(pat.match(commit_message) for pat in exclude_commit_patterns):
+                    log.debug(
+                        "Skipping excluded commit %s (%s)",
+                        parsed_commit.hexsha,
+                        commit_message.replace("\n", " ")[:20],
+                    )
+                    continue
 
-            if the_version is None:
-                raise RuntimeError("expected a version to be found")
+                if not is_commit_released:
+                    log.debug("adding commit %s to unreleased commits", parsed_commit.hexsha)
+                    unreleased[commit_type].append(parsed_commit)
+                    continue
 
-            log.debug(
-                "adding commit %s with type %s to release section for %s",
-                commit.hexsha,
-                commit_type,
-                the_version,
-            )
+                if the_version is None:
+                    raise RuntimeError("expected a version to be found")
 
-            released[the_version]["elements"][commit_type].append(parse_result)
+                log.debug(
+                    "adding commit %s with type %s to release section for %s",
+                    parsed_commit.hexsha,
+                    commit_type,
+                    the_version,
+                )
+
+                released[the_version]["elements"][commit_type].append(parsed_commit)
 
         return cls(unreleased=unreleased, released=released)
 

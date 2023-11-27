@@ -16,8 +16,10 @@ from semantic_release.commit_parser.token import ParsedCommit, ParseError, Parse
 from semantic_release.commit_parser.util import breaking_re, parse_paragraphs
 from semantic_release.enums import LevelBump
 
+from git.objects.commit import Commit
+
 if TYPE_CHECKING:
-    from git.objects.commit import Commit
+    pass
 
 log = logging.getLogger(__name__)
 
@@ -77,16 +79,16 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             """,
             flags=re.VERBOSE | re.DOTALL,
         )
+        self.re_squashed_merge_detection = re.compile(
+            rf"^(?:\*\s*|[\t ]*)?(?:{str.join('|', options.allowed_tags)})(?:\([^)]*?\))?!?: .+$",
+            flags=re.MULTILINE
+        )
 
     @staticmethod
     def get_default_options() -> AngularParserOptions:
         return AngularParserOptions()
 
-    # Maybe this can be cached as an optimisation, similar to how
-    # mypy/pytest use their own caching directories, for very large commit
-    # histories?
-    # The problem is the cache likely won't be present in CI environments
-    def parse(self, commit: Commit) -> ParseResult:
+    def _parse(self, commit: Commit) -> ParseResult:
         """
         Attempt to parse the commit message with a regular expression into a
         ParseResult
@@ -138,3 +140,56 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             breaking_descriptions=breaking_descriptions,
             commit=commit,
         )
+
+
+    # Maybe this can be cached as an optimisation, similar to how
+    # mypy/pytest use their own caching directories, for very large commit
+    # histories?
+    # The problem is the cache likely won't be present in CI environments
+    def parse(self, commit: Commit) -> ParseResult | list[ParseResult]:
+        """
+        Parse a commit message
+
+        If the commit message is a squashed merge commit, it will be split into
+        multiple commits, each of which will be parsed separately. Single commits
+        will be returned as a single ParseResult.
+        """
+        message = str(commit.message)
+
+        # check if it is a squashed merge commit
+        angular_commit_subjects: list[str] = self.re_squashed_merge_detection.findall(message)
+        if len(angular_commit_subjects) < 2:
+            return self._parse(commit)
+
+        # found more than one match, so it is a squashed merge commit
+        # split the commit message into multiple commits
+        squashed_commits = []
+        remaining_message = message
+        for angular_subject in angular_commit_subjects[::-1]:
+            # split the message into two parts
+            remaining_message, commit_description = remaining_message.split(
+                angular_subject, 1
+            )
+            # create a artificial commit object (copy of original but with modified message)
+            artificial_commit = Commit(
+                commit.repo,
+                commit.binsha,
+                author=commit.author,
+                authored_date=commit.authored_date,
+                committer=commit.committer,
+                committed_date=commit.committed_date,
+                message=str.join("", [
+                    angular_subject.lstrip("*"),
+                    commit_description
+                ]).strip(),
+                tree=commit.tree,
+                parents=commit.parents,
+                encoding=commit.encoding,
+                gpgsig=commit.gpgsig,
+                author_tz_offset=commit.author_tz_offset,
+                committer_tz_offset=commit.committer_tz_offset,
+            )
+            # parse the artificial commit
+            squashed_commits.insert(0, self._parse(artificial_commit))
+
+        return squashed_commits
