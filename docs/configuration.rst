@@ -362,6 +362,9 @@ Python Semantic Release also removes its own commits from the Changelog via this
 therefore if you change the automated commit message that Python Semantic Release uses when
 making commits, you may wish to add the *old* commit message pattern here.
 
+Python Semantic Release will ignore merge commits by default, so there is no need to
+specify a pattern for these.
+
 The patterns in this list are treated as regular expressions.
 
 **Default:** ``[]``
