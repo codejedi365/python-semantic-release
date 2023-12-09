@@ -47,6 +47,23 @@ class HvcsClient(str, Enum):
     GITHUB = "github"
     GITLAB = "gitlab"
     GITEA = "gitea"
+    UNKNOWN = "none"
+
+
+_known_commit_parsers = {
+    "angular": AngularCommitParser,
+    "emoji": EmojiCommitParser,
+    "scipy": ScipyCommitParser,
+    "tag": TagCommitParser,
+}
+
+
+_known_hvcs: Dict[HvcsClient, type[hvcs.HvcsBase]] = {
+    HvcsClient.GITHUB: hvcs.Github,
+    HvcsClient.GITLAB: hvcs.Gitlab,
+    HvcsClient.GITEA: hvcs.Gitea,
+    HvcsClient.UNKNOWN: hvcs.UnsupportedVCS,
+}
 
 
 _known_commit_parsers: Dict[str, type[CommitParser]] = {
@@ -386,7 +403,7 @@ class RuntimeContext:
                 "environment variable, but it is empty",
                 raw.remote.token.env,
             )
-        elif not token:
+        elif not token and raw.remote.token:
             log.debug("hvcs token is not set")
 
         hvcs_client = hvcs_client_cls(
