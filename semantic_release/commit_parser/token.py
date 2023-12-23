@@ -17,6 +17,7 @@ class ParsedCommit(NamedTuple):
     descriptions: list[str]
     breaking_descriptions: list[str]
     commit: Commit
+    include_in_changelog: bool = True
 
     @property
     def message(self) -> str:

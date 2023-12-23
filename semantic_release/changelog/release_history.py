@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, TypedDict
 from git.objects.tag import TagObject
 
 from semantic_release.commit_parser import ParseError
+from semantic_release.commit_parser.token import ParsedCommit
 from semantic_release.version.algorithm import tags_and_versions
 
 if TYPE_CHECKING:
@@ -107,6 +108,17 @@ class ReleaseHistory:
             if any(pat.match(commit_message) for pat in exclude_commit_patterns):
                 log.debug(
                     "Skipping excluded commit %s (%s)",
+                    commit.hexsha,
+                    commit_message.replace("\n", " ")[:20],
+                )
+                continue
+
+            if isinstance(parse_result, ParsedCommit) and not parse_result.include_in_changelog:
+                log.debug(
+                    str.join(" ", [
+                        "Skipping commit %s (%s) because parser determined",
+                        "it should not included in the changelog",
+                    ]),
                     commit.hexsha,
                     commit_message.replace("\n", " ")[:20],
                 )
