@@ -368,6 +368,7 @@ major_on_zero = true
 assets = []
 version_variables = ["semantic_release/__init__.py:__version__"]
 version_toml = ["pyproject.toml:project.version"]
+remote = { type = "none" }
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = [
@@ -414,11 +415,10 @@ match = "8.0.x"
 prerelease = true
 prerelease_token = "rc"
 
-[tool.semantic_release.remote]
-name = "origin"
-type = "github"
-ignore_token_for_push = false
-token = { env = "GH_TOKEN" }
+[tool.semantic_release.branches.default]
+match = ".+"
+prerelease = true
+prerelease_token = "dev"
 
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]

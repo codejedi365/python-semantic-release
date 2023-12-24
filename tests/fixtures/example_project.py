@@ -14,7 +14,7 @@ from semantic_release.commit_parser import (
     ScipyCommitParser,
     TagCommitParser,
 )
-from semantic_release.hvcs import Bitbucket, Gitea, Github, Gitlab
+from semantic_release.hvcs import Bitbucket, Gitea, Github, Gitlab, UnsupportedVCS
 
 from tests.const import (
     EXAMPLE_CHANGELOG_MD_CONTENT,
@@ -384,3 +384,13 @@ def use_bitbucket_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsF
         return Bitbucket
 
     return _use_bitbucket_hvcs
+
+
+@pytest.fixture
+def disable_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
+    """Modify the configuration file to disable HVCS integration."""
+    def _use_no_hvcs(domain: str | None = None) -> type[HvcsBase]:
+        update_pyproject_toml("tool.semantic_release.remote.type", "none")
+        return UnsupportedVCS
+
+    return _use_no_hvcs
