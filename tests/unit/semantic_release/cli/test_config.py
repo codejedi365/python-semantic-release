@@ -34,6 +34,11 @@ if TYPE_CHECKING:
     "patched_os_environ, remote_config, expected_token",
     [
         (
+            {"CI_JOB_TOKEN": "mytoken"},
+            {"type": HvcsClient.GITLABCI.value},
+            "mytoken",
+        ),
+        (
             {"GH_TOKEN": "mytoken"},
             {"type": HvcsClient.GITHUB.value},
             "mytoken",

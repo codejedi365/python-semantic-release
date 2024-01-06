@@ -56,6 +56,7 @@ class HvcsClient(str, Enum):
     BITBUCKET = "bitbucket"
     GITHUB = "github"
     GITLAB = "gitlab"
+    GITLABCI = "gitlab-ci"
     GITEA = "gitea"
 
 
@@ -71,6 +72,7 @@ _known_hvcs: Dict[HvcsClient, Type[hvcs.HvcsBase]] = {
     HvcsClient.BITBUCKET: hvcs.Bitbucket,
     HvcsClient.GITHUB: hvcs.Github,
     HvcsClient.GITLAB: hvcs.Gitlab,
+    HvcsClient.GITLABCI: hvcs.GitlabCi,
     HvcsClient.GITEA: hvcs.Gitea,
 }
 
