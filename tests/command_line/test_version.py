@@ -14,7 +14,15 @@ from pytest_lazyfixture import lazy_fixture
 
 from semantic_release.cli import main, version
 
-from tests.const import EXAMPLE_PROJECT_NAME, EXAMPLE_RELEASE_NOTES_TEMPLATE
+from tests.const import EXAMPLE_PROJECT_NAME, EXAMPLE_RELEASE_NOTES_TEMPLATE, SUCCESS_EXIT_CODE
+from tests.fixtures import (
+    repo_with_git_flow_angular_commits,
+    repo_with_git_flow_and_release_channels_angular_commits,
+    repo_w_github_flow_w_feature_release_channel_angular_commits,
+    repo_with_no_tags_angular_commits,
+    repo_with_single_branch_and_prereleases_angular_commits,
+    repo_with_single_branch_angular_commits,
+)
 from tests.util import (
     actions_output_to_dict,
     flatten_dircmp,
@@ -44,12 +52,12 @@ version_subcmd = version.name or version.__name__
 @pytest.mark.parametrize(
     "repo",
     [
-        lazy_fixture("repo_with_no_tags_angular_commits"),
-        lazy_fixture("repo_with_single_branch_angular_commits"),
-        lazy_fixture("repo_with_single_branch_and_prereleases_angular_commits"),
-        lazy_fixture("repo_w_github_flow_w_feature_release_channel_angular_commits"),
-        lazy_fixture("repo_with_git_flow_angular_commits"),
-        lazy_fixture("repo_with_git_flow_and_release_channels_angular_commits"),
+        lazy_fixture(repo_with_no_tags_angular_commits.__name__),
+        lazy_fixture(repo_with_single_branch_angular_commits.__name__),
+        lazy_fixture(repo_with_single_branch_and_prereleases_angular_commits.__name__),
+        lazy_fixture(repo_w_github_flow_w_feature_release_channel_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_and_release_channels_angular_commits.__name__),
     ],
 )
 def test_version_noop_is_noop(
@@ -78,11 +86,13 @@ def test_version_noop_is_noop(
     tags_after = sorted(repo.tags, key=lambda tag: tag.name)
     head_after = repo.head.commit
 
-    assert result.exit_code == 0
+    # Calculate any differences
     dcmp = filecmp.dircmp(str(example_project_dir.resolve()), tempdir)
-
     differing_files = flatten_dircmp(dcmp)
-    assert not differing_files
+
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+    assert 0 == len(differing_files)
     assert tags_before == tags_after
     assert head_before == head_after
 
@@ -95,7 +105,7 @@ def test_version_noop_is_noop(
     [
         *[
             (
-                lazy_fixture("repo_with_no_tags_angular_commits"),
+                lazy_fixture(repo_with_no_tags_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -116,7 +126,7 @@ def test_version_noop_is_noop(
         ],
         *[
             (
-                lazy_fixture("repo_with_single_branch_angular_commits"),
+                lazy_fixture(repo_with_single_branch_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -137,7 +147,7 @@ def test_version_noop_is_noop(
         ],
         *[
             (
-                lazy_fixture("repo_with_single_branch_and_prereleases_angular_commits"),
+                lazy_fixture(repo_with_single_branch_and_prereleases_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -181,7 +191,7 @@ def test_version_noop_is_noop(
         ],
         *[
             (
-                lazy_fixture("repo_with_git_flow_angular_commits"),
+                lazy_fixture(repo_with_git_flow_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -202,7 +212,7 @@ def test_version_noop_is_noop(
         ],
         *[
             (
-                lazy_fixture("repo_with_git_flow_and_release_channels_angular_commits"),
+                lazy_fixture(repo_with_git_flow_and_release_channels_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -235,9 +245,7 @@ def test_version_print(
     # otherwise the "no release will be made" logic will kick in first
     new_file = example_project_dir / "temp.txt"
     new_file.write_text("noop version test")
-
-    repo.git.add(str(new_file.resolve()))
-    repo.git.commit(m="fix: temp new file")
+    repo.git.commit(m="fix: temp new file", a=True)
 
     tempdir = tmp_path_factory.mktemp("test_version_print")
     remove_dir_tree(tempdir.resolve(), force=True)
@@ -250,13 +258,16 @@ def test_version_print(
     tags_after = sorted(repo.tags, key=lambda tag: tag.name)
     head_after = repo.head.commit
 
-    assert result.exit_code == 0
-    assert tags_before == tags_after
-    assert head_before == head_after
-    assert result.stdout.rstrip("\n") == expected_stdout
+    # Calculate differences
     dcmp = filecmp.dircmp(str(example_project_dir.resolve()), tempdir)
     differing_files = flatten_dircmp(dcmp)
-    assert not differing_files
+
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+    assert tags_before == tags_after
+    assert head_before == head_after
+    assert expected_stdout == result.stdout.rstrip("\n")
+    assert 0 == len(differing_files)
 
 
 @pytest.mark.parametrize(
@@ -264,11 +275,11 @@ def test_version_print(
     [
         # This project is yet to add any tags, so a release would be triggered
         # so excluding lazy_fixture("repo_with_no_tags_angular_commits"),
-        lazy_fixture("repo_with_single_branch_angular_commits"),
-        lazy_fixture("repo_with_single_branch_and_prereleases_angular_commits"),
-        lazy_fixture("repo_w_github_flow_w_feature_release_channel_angular_commits"),
-        lazy_fixture("repo_with_git_flow_angular_commits"),
-        lazy_fixture("repo_with_git_flow_and_release_channels_angular_commits"),
+        lazy_fixture(repo_with_single_branch_angular_commits.__name__),
+        lazy_fixture(repo_with_single_branch_and_prereleases_angular_commits.__name__),
+        lazy_fixture(repo_w_github_flow_w_feature_release_channel_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_and_release_channels_angular_commits.__name__),
     ],
 )
 def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
@@ -276,7 +287,9 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
     # has already been released, so we expect an exit code of 2 with the message
     # to indicate that no release will be made
     result = cli_runner.invoke(main, ["--strict", version_subcmd, "--no-push"])
-    assert result.exit_code == 2
+    failure_exit_code = 2
+
+    assert failure_exit_code == result.exit_code
     assert "no release will be made" in result.stderr.lower()
 
 
@@ -285,7 +298,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
     [
         *[
             (
-                lazy_fixture("repo_with_no_tags_angular_commits"),
+                lazy_fixture(repo_with_no_tags_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -305,7 +318,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
         ],
         *[
             (
-                lazy_fixture("repo_with_single_branch_angular_commits"),
+                lazy_fixture(repo_with_single_branch_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -325,7 +338,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
         ],
         *[
             (
-                lazy_fixture("repo_with_single_branch_and_prereleases_angular_commits"),
+                lazy_fixture(repo_with_single_branch_and_prereleases_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -346,7 +359,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
         *[
             (
                 lazy_fixture(
-                    "repo_w_github_flow_w_feature_release_channel_angular_commits"
+                    repo_w_github_flow_w_feature_release_channel_angular_commits.__name__
                 ),
                 cli_args,
                 expected_stdout,
@@ -367,7 +380,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
         ],
         *[
             (
-                lazy_fixture("repo_with_git_flow_angular_commits"),
+                lazy_fixture(repo_with_git_flow_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -387,7 +400,7 @@ def test_version_already_released_no_push(repo: Repo, cli_runner: CliRunner):
         ],
         *[
             (
-                lazy_fixture("repo_with_git_flow_and_release_channels_angular_commits"),
+                lazy_fixture(repo_with_git_flow_and_release_channels_angular_commits.__name__),
                 cli_args,
                 expected_stdout,
             )
@@ -429,8 +442,8 @@ def test_version_no_push_force_level(
     tags_after = sorted(repo.tags, key=lambda tag: tag.name)
     head_after = repo.head.commit
 
-    assert result.exit_code == 0
-
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
     assert set(tags_before) < set(tags_after)
     assert head_before != head_after  # A commit has been made
     assert head_before in repo.head.commit.parents
@@ -438,14 +451,16 @@ def test_version_no_push_force_level(
     dcmp = filecmp.dircmp(str(example_project_dir.resolve()), tempdir)
     differing_files = sorted(flatten_dircmp(dcmp))
 
-    # Changelog already reflects changes this should introduce
-    assert differing_files == sorted(
+    # Files that should receive version change
+    expected_changed_files = sorted(
         [
+            # Changelog already reflects changes this would introduce
             "CHANGELOG.md",
             "pyproject.toml",
             f"src/{EXAMPLE_PROJECT_NAME}/_version.py",
         ]
     )
+    assert expected_changed_files == differing_files
 
     # Compare pyproject.toml
     new_pyproject_toml = tomlkit.loads(
@@ -461,7 +476,7 @@ def test_version_no_push_force_level(
     )
 
     assert old_pyproject_toml == new_pyproject_toml
-    assert new_version == expected_new_version
+    assert expected_new_version == new_version
 
     # Compare _version.py
     new_init_py = (
@@ -488,11 +503,11 @@ def test_version_no_push_force_level(
 @pytest.mark.parametrize(
     "repo",
     [
-        lazy_fixture("repo_with_single_branch_angular_commits"),
-        lazy_fixture("repo_with_single_branch_and_prereleases_angular_commits"),
-        lazy_fixture("repo_w_github_flow_w_feature_release_channel_angular_commits"),
-        lazy_fixture("repo_with_git_flow_angular_commits"),
-        lazy_fixture("repo_with_git_flow_and_release_channels_angular_commits"),
+        lazy_fixture(repo_with_single_branch_angular_commits.__name__),
+        lazy_fixture(repo_with_single_branch_and_prereleases_angular_commits.__name__),
+        lazy_fixture(repo_w_github_flow_w_feature_release_channel_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_angular_commits.__name__),
+        lazy_fixture(repo_with_git_flow_and_release_channels_angular_commits.__name__),
     ],
 )
 def test_version_build_metadata_triggers_new_version(repo: Repo, cli_runner: CliRunner):
@@ -500,14 +515,19 @@ def test_version_build_metadata_triggers_new_version(repo: Repo, cli_runner: Cli
     no_metadata_result = cli_runner.invoke(
         main, ["--strict", version_subcmd, "--no-push"]
     )
-    assert no_metadata_result.exit_code == 2
+    failure_exit_code = 2
+
+    # Evaluate (expected -> actual)
+    assert failure_exit_code == no_metadata_result.exit_code
     assert "no release will be made" in no_metadata_result.stderr.lower()
 
     metadata_suffix = "build.abc-12345"
     result = cli_runner.invoke(
         main, [version_subcmd, "--no-push", "--build-metadata", metadata_suffix]
     )
-    assert result.exit_code == 0
+
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
     assert repo.git.tag(l=f"*{metadata_suffix}")
 
 
@@ -515,7 +535,7 @@ def test_version_prints_current_version_if_no_new_version(
     repo_with_git_flow_angular_commits: Repo, cli_runner: CliRunner
 ):
     result = cli_runner.invoke(main, [version_subcmd or "version", "--no-push"])
-    assert result.exit_code == 0
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
     assert "no release will be made" in result.stderr.lower()
     assert result.stdout == "1.2.0-alpha.2\n"
 
@@ -543,8 +563,9 @@ def test_version_runs_build_command(
         result = cli_runner.invoke(
             main, [version_subcmd or "version", "--patch", "--no-push"]
         )
-        assert result.exit_code == 0
 
+        # Evaluate (expected -> actual)
+        assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
         patched_subprocess_run.assert_called_once_with(
             [exe, "-c", build_command], check=True
         )
@@ -556,11 +577,13 @@ def test_version_skips_build_command_with_skip_build(
     with mock.patch(
         "subprocess.run", return_value=CompletedProcess(args=(), returncode=0)
     ) as patched_subprocess_run:
+        # force a new version
         result = cli_runner.invoke(
             main, [version_subcmd, "--patch", "--no-push", "--skip-build"]
-        )  # force a new version
-        assert result.exit_code == 0
+        )
 
+        # Evaluate (expected -> actual)
+        assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
         patched_subprocess_run.assert_not_called()
 
 
@@ -570,22 +593,24 @@ def test_version_writes_github_actions_output(
     mock_output_file = tmp_path / "action.out"
     monkeypatch.setenv("GITHUB_OUTPUT", str(mock_output_file.resolve()))
     result = cli_runner.invoke(main, [version_subcmd, "--patch", "--no-push"])
-    assert result.exit_code == 0
 
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
     action_outputs = actions_output_to_dict(
         mock_output_file.read_text(encoding="utf-8")
     )
     assert "released" in action_outputs
-    assert action_outputs["released"] == "true"
+    assert "true" == action_outputs["released"]
     assert "version" in action_outputs
-    assert action_outputs["version"] == "1.2.1"
+    assert "1.2.1" == action_outputs["version"]
     assert "tag" in action_outputs
-    assert action_outputs["tag"] == "v1.2.1"
+    assert "v1.2.1" == action_outputs["tag"]
 
 
 def test_version_exit_code_when_strict(repo_with_git_flow_angular_commits, cli_runner):
     result = cli_runner.invoke(main, ["--strict", version_subcmd, "--no-push"])
-    assert result.exit_code != 0
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE != result.exit_code  # noqa: SIM300
 
 
 def test_version_exit_code_when_not_strict(
@@ -593,7 +618,9 @@ def test_version_exit_code_when_not_strict(
 ):
     # Testing "no release will be made"
     result = cli_runner.invoke(main, [version_subcmd, "--no-push"])
-    assert result.exit_code == 0
+
+    # Evaluate (expected -> actual)
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
 
 
 def test_custom_release_notes_template(
@@ -628,16 +655,16 @@ def test_custom_release_notes_template(
         ).render(version=release_version, release=release)
     )
 
-    # Assert
-    assert mocked_git_push.call_count == 2  # 1 for commit, 1 for tag
-    assert resp.exit_code == 0, (
+    # Evaluate (expected -> actual)
+    assert 2 == mocked_git_push.call_count  # 1 for commit, 1 for tag
+    assert SUCCESS_EXIT_CODE == resp.exit_code, (   # noqa: SIM300
         "Unexpected failure in command "
         f"'semantic-release {version_subcmd} --skip-build --vcs-release': "
         + resp.stderr
     )
-    assert post_mocker.call_count == 1
+    assert 1 == post_mocker.call_count
     assert post_mocker.last_request is not None
-    assert post_mocker.last_request.json()["body"] == expected_release_notes
+    assert expected_release_notes == post_mocker.last_request.json()["body"]
 
 
 def test_version_tag_only_push(
@@ -651,6 +678,7 @@ def test_version_tag_only_push(
         repo_with_no_tags_angular_commits
     )
     head_before = runtime_context_with_no_tags.repo.head.commit
+    expected_tag = "v1.0.0"
 
     # Act
     args = [version_subcmd, "--tag", "--no-commit", "--skip-build", "--no-vcs-release"]
@@ -659,11 +687,11 @@ def test_version_tag_only_push(
     tag_after = runtime_context_with_no_tags.repo.tags[-1].name
     head_after = runtime_context_with_no_tags.repo.head.commit
 
-    # Assert
-    assert tag_after == "v0.1.0"
+    # Evaluate (expected -> actual)
+    assert expected_tag == tag_after
     assert head_before == head_after
-    assert mocked_git_push.call_count == 1  # 0 for commit, 1 for tag
-    assert resp.exit_code == 0, (
+    assert 1 == mocked_git_push.call_count  # 0 for commit, 1 for tag
+    assert SUCCESS_EXIT_CODE == resp.exit_code, (  # noqa: SIM300
         "Unexpected failure in command "
         f"'semantic-release {str.join(' ', args)}': " + resp.stderr
     )
@@ -701,13 +729,12 @@ def test_version_only_update_files_no_git_actions(
     tags_after = runtime_context_with_tags.repo.tags
     head_after = runtime_context_with_tags.repo.head.commit
 
-    # Assert
+    # Evaluate (expected -> actual)
     assert tags_before == tags_after
     assert head_before == head_after
-    assert (
-        mocked_git_push.call_count == 0
-    )  # no push as it should be turned off automatically
-    assert resp.exit_code == 0, (
+    assert 0 == mocked_git_push.call_count
+    # no push as it should be turned off automatically
+    assert SUCCESS_EXIT_CODE == resp.exit_code, (  # noqa: SIM300
         "Unexpected failure in command "
         f"'semantic-release {str.join(' ', args)}': " + resp.stderr
     )
@@ -759,17 +786,18 @@ def test_version_only_update_files_no_git_actions(
     added = [line[2:] for line in diff if line.startswith("+ ")]
     removed = [line[2:] for line in diff if line.startswith("- ")]
 
-    assert len(removed) == 1
+    assert 1 == len(removed)
     assert re.match('__version__ = ".*"', removed[0])
-    assert added == [f'__version__ = "{expected_new_version}"\n']
+    assert [f'__version__ = "{expected_new_version}"\n'] == added
 
 
 def test_version_print_last_released_prints_version(
     repo_with_single_branch_tag_commits: Repo, cli_runner: CliRunner
 ):
-    result = cli_runner.invoke(main, [version.name, "--print-last-released"])
-    assert result.exit_code == 0
-    assert result.stdout == "0.1.1\n"
+    expected_version = "0.1.1"
+    result = cli_runner.invoke(main, [version_subcmd, "--print-last-released"])
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+    assert expected_version == result.stdout.strip()
 
 
 def test_version_print_last_released_prints_released_if_commits(
@@ -777,21 +805,22 @@ def test_version_print_last_released_prints_released_if_commits(
     example_project_dir: ExProjectDir,
     cli_runner: CliRunner,
 ):
+    expected_version = "0.1.1"
     new_file = example_project_dir / "temp.txt"
     new_file.write_text("test --print-last-released")
 
     repo_with_single_branch_tag_commits.git.add(str(new_file.resolve()))
     repo_with_single_branch_tag_commits.git.commit(m="fix: temp new file")
 
-    result = cli_runner.invoke(main, [version.name, "--print-last-released"])
-    assert result.exit_code == 0
-    assert result.stdout == "0.1.1\n"
+    result = cli_runner.invoke(main, [version_subcmd, "--print-last-released"])
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+    assert expected_version == result.stdout.strip()
 
 
 def test_version_print_last_released_prints_nothing_if_no_tags(
     caplog, repo_with_no_tags_angular_commits: Repo, cli_runner: CliRunner
 ):
-    result = cli_runner.invoke(main, [version.name, "--print-last-released"])
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    result = cli_runner.invoke(main, [version_subcmd, "--print-last-released"])
+    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+    assert not result.stdout
     assert "No release tags found." in caplog.text

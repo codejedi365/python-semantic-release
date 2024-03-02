@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import operator
 import random
+from typing import TYPE_CHECKING
 
 import pytest
 
 from semantic_release.enums import LevelBump
 from semantic_release.errors import InvalidVersion
 from semantic_release.version.version import Version
+
+if TYPE_CHECKING:
+    from typing import Any, Callable
 
 random.seed(0)
 
@@ -23,6 +29,11 @@ EXAMPLE_VERSION_STRINGS = [
     "5.3.1+local.123456",
     "9.22.0-alpha.4+build.9999",
 ]
+
+
+@pytest.fixture(params=EXAMPLE_VERSION_STRINGS)
+def a_version(request: pytest.FixtureRequest) -> Version:
+    return Version.parse(request.param)
 
 
 @pytest.mark.parametrize(
@@ -47,19 +58,23 @@ EXAMPLE_VERSION_STRINGS = [
     ],
 )
 def test_version_parse_succeeds(version_parts):
+    # Create a parsable version string from the given parts
     full = f"{version_parts[0]}.{version_parts[1]}.{version_parts[2]}"
     prerelease = f"-{version_parts[3]}.{version_parts[4]}" if version_parts[4] else ""
     build_metadata = f"+{version_parts[5]}" if version_parts[5] else ""
     version_str = f"{full}{prerelease}{build_metadata}"
 
+    # Parse a version string
     version = Version.parse(version_str)
-    assert version.major == version_parts[0]
-    assert version.minor == version_parts[1]
-    assert version.patch == version_parts[2]
-    assert version.prerelease_token == version_parts[3]
-    assert version.prerelease_revision == version_parts[4]
-    assert version.build_metadata == version_parts[5]
-    assert str(version) == version_str
+
+    # Evaluate (expected -> actual)
+    assert version_parts[0] == version.major
+    assert version_parts[1] == version.minor
+    assert version_parts[2] == version.patch
+    assert version_parts[3] == version.prerelease_token
+    assert version_parts[4] == version.prerelease_revision
+    assert version_parts[5] == version.build_metadata
+    assert version_str == str(version)
 
 
 @pytest.mark.parametrize(
@@ -77,20 +92,15 @@ def test_version_parse_succeeds(version_parts):
         "M2.m3.p1",
     ],
 )
-def test_version_parse_fails(bad_version):
+def test_version_parse_fails(bad_version: str):
     with pytest.raises(InvalidVersion, match=f"{bad_version!r}"):
         Version.parse(bad_version)
-
-
-@pytest.fixture(params=EXAMPLE_VERSION_STRINGS)
-def a_version(request):
-    return Version.parse(request.param)
 
 
 @pytest.mark.parametrize(
     "bad_format", ["non_unique_format", "case_sensitive_{Version}", "typo_{versione}"]
 )
-def test_tag_format_must_contain_version_field(a_version, bad_format):
+def test_tag_format_must_contain_version_field(a_version: Version, bad_format: str):
     with pytest.raises(ValueError, match=f"Invalid tag_format {bad_format!r}"):
         a_version.tag_format = bad_format
 
@@ -105,9 +115,14 @@ def test_tag_format_must_contain_version_field(a_version, bad_format):
         "{version}-demo-{version}",
     ],
 )
-def test_change_tag_format_updates_as_tag_method(a_version, tag_format):
+def test_change_tag_format_updates_as_tag_method(a_version: Version, tag_format: str):
+    expected_tag = tag_format.format(version=str(a_version))
+
+    # prepare version's tag format value
     a_version.tag_format = tag_format
-    assert a_version.as_tag() == tag_format.format(version=str(a_version))
+
+    # Evaluate results (expected -> actual)
+    assert expected_tag == a_version.as_tag()
 
 
 @pytest.mark.parametrize(
@@ -122,13 +137,9 @@ def test_change_tag_format_updates_as_tag_method(a_version, tag_format):
         ("4.2.4+zzzz9000", False),
     ],
 )
-def test_version_prerelease(version_str, is_prerelease):
-    assert Version.parse(version_str).is_prerelease == is_prerelease
-
-
-def test_version_eq_succeeds(a_version):
-    assert a_version == a_version
-    assert a_version == str(a_version)
+def test_version_prerelease(version_str: str, is_prerelease: bool):
+    # Evaluate (expected -> actual)
+    assert is_prerelease == Version.parse(version_str).is_prerelease
 
 
 @pytest.mark.parametrize(
@@ -155,12 +166,16 @@ def test_version_eq_succeeds(a_version):
         lambda left, right: left != right,
     ],
 )
-def test_version_comparator_succeeds(lower_version, upper_version, op):
+def test_version_comparator_succeeds(
+    lower_version: str,
+    upper_version: str,
+    op: Callable[[Version | str, Version | str], Any],
+):
     left = Version.parse(lower_version)
     right = Version.parse(upper_version)
     # Test both on Version $op string and on Version $op Version
     assert op(left, right)
-    assert op(left, str(right))
+    assert op(left, str(upper_version))
 
 
 @pytest.mark.parametrize(
@@ -183,19 +198,22 @@ def test_version_comparator_succeeds(lower_version, upper_version, op):
         operator.ge,
     ],
 )
-def test_version_comparator_typeerror(bad_input, op):
+def test_version_comparator_typeerror(
+    bad_input: Any, op: Callable[[Version, Any], Any]
+):
     with pytest.raises(TypeError):
         op(Version.parse("1.4.5"), bad_input)
 
 
-def test_version_equality(a_version):
+def test_version_equality(a_version: Version):
+    assert a_version == str(a_version)
     assert a_version == Version.parse(str(a_version))
 
 
 @pytest.mark.parametrize(
     "left, right", [("1.2.3+local.3", "1.2.3"), ("2.1.1-rc.1+build.7777", "2.1.1-rc.1")]
 )
-def test_version_equality_when_build_metadata_lost(left, right):
+def test_version_equality_when_build_metadata_lost(left: str, right: str):
     assert Version.parse(left) == Version.parse(right)
 
 
@@ -213,11 +231,13 @@ def test_version_equality_when_build_metadata_lost(left, right):
         ("1.0.1", "2.0.0-rc.1", LevelBump.MAJOR),
     ],
 )
-def test_version_difference(lower_version, upper_version, level):
+def test_version_difference(lower_version: str, upper_version: str, level: LevelBump):
     left = Version.parse(lower_version)
     right = Version.parse(upper_version)
-    assert (left - right) is level
-    assert (right - left) is level
+
+    # Calculate and evaluate (expected -> actual)
+    assert level is (left - right)
+    assert level is (right - left)
 
 
 @pytest.mark.parametrize(
@@ -233,7 +253,7 @@ def test_version_difference(lower_version, upper_version, level):
 )
 def test_unimplemented_version_diff(bad_input):
     with pytest.raises(TypeError, match=r"unsupported operand type"):
-        Version.parse("1.2.3") - bad_input
+        assert Version.parse("1.2.3") - bad_input
 
 
 @pytest.mark.parametrize(
@@ -246,11 +266,15 @@ def test_unimplemented_version_diff(bad_input):
     ],
 )
 def test_version_to_prerelease_defaults(
-    current_version, prerelease_token, expected_prerelease_version
+    current_version: str, prerelease_token: str | None, expected_prerelease_version: str
 ):
-    assert Version.parse(current_version).to_prerelease(
-        token=prerelease_token
-    ) == Version.parse(expected_prerelease_version)
+    expected_ver = Version.parse(expected_prerelease_version)
+
+    # Calculate
+    resulting_ver = Version.parse(current_version).to_prerelease(token=prerelease_token)
+
+    # Evaluate (expected -> actual)
+    assert expected_ver == resulting_ver
 
 
 @pytest.mark.parametrize(
@@ -263,11 +287,16 @@ def test_version_to_prerelease_defaults(
     ],
 )
 def test_version_to_prerelease_with_params(
-    current_version, prerelease_token, revision, expected_prerelease_version
+    current_version: str,
+    prerelease_token: str | None,
+    revision: int,
+    expected_prerelease_version: str,
 ):
-    assert Version.parse(current_version).to_prerelease(
+    expected_ver = Version.parse(expected_prerelease_version)
+    resulting_ver = Version.parse(current_version).to_prerelease(
         token=prerelease_token, revision=revision
-    ) == Version.parse(expected_prerelease_version)
+    )
+    assert expected_ver == resulting_ver
 
 
 @pytest.mark.parametrize(
@@ -282,9 +311,12 @@ def test_version_to_prerelease_with_params(
 )
 def test_version_finalize_version(current_version, expected_final_version):
     v1 = Version.parse(current_version)
-    assert v1.finalize_version() == Version.parse(
+    expected_result = Version.parse(
         expected_final_version, prerelease_token=v1.prerelease_token
     )
+
+    # Evaluate (expected -> actual)
+    assert expected_result == v1.finalize_version()
 
 
 @pytest.mark.parametrize(
@@ -303,10 +335,16 @@ def test_version_finalize_version(current_version, expected_final_version):
     ],
 )
 def test_version_bump_succeeds(current_version, level, new_version):
-    cv = Version.parse(current_version)
-    nv = cv.bump(level)
-    assert nv == Version.parse(new_version)
-    assert cv + level == Version.parse(new_version)
+    curr_ver = Version.parse(current_version)
+    expected_bumped_ver = Version.parse(new_version)
+
+    # Calculate 2 different ways
+    bump_fn_result = curr_ver.bump(level)
+    additive_result = curr_ver + level
+
+    # Evaluate (expected -> actual)
+    assert expected_bumped_ver == bump_fn_result
+    assert expected_bumped_ver == additive_result
 
 
 @pytest.mark.parametrize("bad_level", [5, "patch", {"major": True}, [1, 1, 0, 0, 1], 1])

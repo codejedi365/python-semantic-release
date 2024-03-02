@@ -259,9 +259,9 @@ def test_changelog_post_to_release(
         m.delenv("CI_PROJECT_NAMESPACE", raising=False)
         result = cli_runner.invoke(main, [changelog_subcmd, *args])
 
-    assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+        assert SUCCESS_EXIT_CODE == result.exit_code  # noqa: SIM300
+        assert mocker.called
 
-    assert mocker.called
     assert mock_adapter.called
     assert mock_adapter.last_request is not None
     assert expected_request_url == mock_adapter.last_request.url

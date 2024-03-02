@@ -57,6 +57,8 @@ def tags_and_versions(
         if version:
             ts_and_vs.append((tag, version))
 
+    # Git does not provide back the tags it the proper chronological order if the pre-release token is different
+
     log.info("found %s previous tags", len(ts_and_vs))
     return sorted(ts_and_vs, reverse=True, key=lambda v: v[1])
 
