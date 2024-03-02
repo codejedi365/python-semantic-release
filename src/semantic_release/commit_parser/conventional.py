@@ -6,7 +6,8 @@ from itertools import zip_longest
 from logging import getLogger
 from re import compile as regexp
 from textwrap import dedent
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
+from typing_extensions import TypeAlias
 
 from git.objects.commit import Commit
 from pydantic.dataclasses import dataclass
@@ -31,6 +32,8 @@ from semantic_release.helpers import sort_numerically, text_reducer
 if TYPE_CHECKING:  # pragma: no cover
     from git.objects.commit import Commit
 
+CommitTypeStr: TypeAlias = str
+ScopeStr: TypeAlias = str
 
 def _logged_parse_error(commit: Commit, error: str) -> ParseError:
     getLogger(__name__).debug(error)
@@ -57,21 +60,26 @@ LONG_TYPE_NAMES = {
 class ConventionalCommitParserOptions(ParserOptions):
     """Options dataclass for the ConventionalCommitParser."""
 
-    minor_tags: Tuple[str, ...] = ("feat",)
-    """Commit-type prefixes that should result in a minor release bump."""
+    minor_tags: dict[CommitTypeStr, tuple[ScopeStr, ...]] = { "feat": (".*",) }
+    """Commit-type prefixes & scopes that should result in a minor release bump."""
 
-    patch_tags: Tuple[str, ...] = ("fix", "perf")
-    """Commit-type prefixes that should result in a patch release bump."""
+    patch_tags: dict[CommitTypeStr, tuple[ScopeStr, ...]] = {
+        "fix": (".*",),
+        "perf": (".*",),
+        "build": ("deps",),
+    }
+    """Commit-type prefixes & scopes that should result in a patch release bump."""
 
-    other_allowed_tags: Tuple[str, ...] = (
-        "build",
-        "chore",
-        "ci",
-        "docs",
-        "style",
-        "refactor",
-        "test",
-    )
+    other_allowed_tags: dict[CommitTypeStr, tuple[ScopeStr, ...]] = {
+        "build": (".*",),
+        "chore": (".*",),
+        "ci": (".*",),
+        "docs": (".*",),
+        "style": (".*",),
+        "refactor": (".*",),
+        "test": (".*",),
+        "revert": (".*",),
+    }
     """Commit-type prefixes that are allowed but do not result in a version bump."""
 
     default_bump_level: LevelBump = LevelBump.NO_RELEASE
