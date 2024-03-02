@@ -12,7 +12,7 @@ from re import (
     error as RegexError,  # noqa: N812
 )
 from textwrap import dedent
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, cast
 
 from git.objects.commit import Commit
 
@@ -37,7 +37,7 @@ from semantic_release.errors import InvalidParserOptions
 from semantic_release.helpers import sort_numerically, text_reducer
 
 if TYPE_CHECKING:
-    pass
+    from typing import ClassVar
 
 
 # TODO: Remove from here, allow for user customization instead via options
@@ -224,24 +224,39 @@ class ConventionalCommitParser(
 
     def create_parsed_message_result(
         self, match: RegexMatch[str]
-    ) -> ParsedMessageResult:
+    ) -> ParsedMessageResult | None:
         parsed_break = match.group("break")
-        parsed_scope = match.group("scope") or ""
-        parsed_subject = match.group("subject")
-        parsed_text = match.group("text")
-        parsed_type = match.group("type")
+        commit_scope = match.group("scope") or ""
+        commit_subject = match.group("subject")
+        commit_body = match.group("text")
+        commit_type = match.group("type")
+
+        commit_type_n_scope = f"{commit_type}({commit_scope})"
+        matching_pattern: str = ""
+
+        for str_pattern in self.options.tag_to_level:
+            if regexp(str_pattern).match(commit_type_n_scope):
+                matching_pattern = str_pattern
+                break
+
+        if (
+            level_bump := self.options.tag_to_level.get(matching_pattern, None)
+        ) is None and self.options.strict_scope:
+            # If the commit type with scope is not recognized and strict scope is enabled,
+            # then treat this as an invalid commit message
+            return None
 
         linked_merge_request = ""
-        if mr_match := self.mr_selector.search(parsed_subject):
+        if mr_match := self.mr_selector.search(commit_subject):
             linked_merge_request = mr_match.group("mr_number")
-            parsed_subject = self.mr_selector.sub("", parsed_subject).strip()
+            commit_subject = self.mr_selector.sub("", commit_subject).strip()
 
         body_components: dict[str, list[str]] = reduce(
             self.commit_body_components_separator,
             [
                 # Insert the subject before the other paragraphs
-                parsed_subject,
-                *parse_paragraphs(parsed_text or ""),
+                commit_subject,
+                *parse_paragraphs(commit_body or ""),
             ],
             {
                 "breaking_descriptions": [],
@@ -254,16 +269,14 @@ class ConventionalCommitParser(
         level_bump = (
             LevelBump.MAJOR
             if body_components["breaking_descriptions"] or parsed_break
-            else self.options.tag_to_level.get(
-                parsed_type, self.options.default_bump_level
-            )
+            else level_bump or LevelBump.NO_RELEASE
         )
 
         return ParsedMessageResult(
             bump=level_bump,
-            type=parsed_type,
-            category=LONG_TYPE_NAMES.get(parsed_type, parsed_type),
-            scope=parsed_scope,
+            type=commit_type,
+            category=LONG_TYPE_NAMES.get(commit_type, commit_type),
+            scope=commit_scope,
             descriptions=tuple(body_components["descriptions"]),
             breaking_descriptions=tuple(body_components["breaking_descriptions"]),
             release_notices=tuple(body_components["notices"]),
@@ -401,10 +414,10 @@ class ConventionalCommitParser(
             normalized_message
         )
 
-        separate_commit_msgs: list[str] = reduce(
+        separate_commit_msgs = reduce(
             lambda all_msgs, msgs: all_msgs + msgs,
             map(self._find_squashed_commits_in_str, obvious_squashed_commits),
-            [],
+            cast("list[str]", []),
         )
 
         return list(filter(None, separate_commit_msgs))
