@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import reduce
 import logging
 from contextlib import suppress
 from queue import LifoQueue
@@ -349,8 +350,18 @@ def next_version(
     parsed_levels: set[LevelBump] = {
         parsed_result.bump  # type: ignore[union-attr] # too complex for type checkers
         for parsed_result in filter(
+            # Filter out any non-ParsedCommit results (i.e. ParseErrors)
             lambda parsed_result: isinstance(parsed_result, ParsedCommit),
-            map(commit_parser.parse, commits_since_last_release),
+            reduce(
+                # Accumulate all parsed results into a single list
+                lambda accumulated_results, parsed_results: [
+                    *accumulated_results,
+                    *(parsed_results if isinstance(parsed_results, Iterable) else [parsed_results]),
+                ],
+                # apply the parser to each commit in the history (could return multiple results per commit)
+                map(commit_parser.parse, commits_since_last_release),
+                [],
+            )
         )
     }
 
