@@ -12,8 +12,13 @@ from typing import TYPE_CHECKING, Tuple
 from pydantic.dataclasses import dataclass
 
 from semantic_release.commit_parser._base import CommitParser, ParserOptions
-from semantic_release.commit_parser.token import ParsedCommit, ParseError, ParseResult
-from semantic_release.commit_parser.util import breaking_re, parse_paragraphs
+from semantic_release.commit_parser.util import (
+    ParsedCommit,
+    ParseError,
+    ParseResult,
+    breaking_regex,
+    parse_paragraphs,
+)
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:
@@ -110,7 +115,7 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
         # Look for descriptions of breaking changes
         breaking_descriptions = [
             match.group(1)
-            for match in (breaking_re.match(p) for p in descriptions[1:])
+            for match in (breaking_regex.match(p) for p in descriptions[1:])
             if match
         ]
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from semantic_release.commit_parser.token import ParseResultType
+from semantic_release.commit_parser.util import ParseResultType
 
 if TYPE_CHECKING:
     from git.objects.commit import Commit

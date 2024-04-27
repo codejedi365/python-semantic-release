@@ -8,7 +8,7 @@ from semantic_release.commit_parser.angular import (
     AngularCommitParser,
     AngularParserOptions,
 )
-from semantic_release.commit_parser.token import ParsedCommit, ParseError
+from semantic_release.commit_parser.util import ParsedCommit, ParseError
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:

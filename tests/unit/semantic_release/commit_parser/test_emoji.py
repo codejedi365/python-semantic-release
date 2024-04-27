@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from semantic_release.commit_parser.token import ParsedCommit
+from semantic_release.commit_parser.util import ParsedCommit
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:

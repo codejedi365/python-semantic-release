@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from semantic_release.commit_parser.scipy import tag_to_section
-from semantic_release.commit_parser.token import ParsedCommit
+from semantic_release.commit_parser.util import ParsedCommit
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:

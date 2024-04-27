@@ -7,8 +7,11 @@ from git.objects.commit import Commit
 from pydantic.dataclasses import dataclass
 
 from semantic_release.commit_parser._base import CommitParser, ParserOptions
-from semantic_release.commit_parser.token import ParsedCommit, ParseResult
-from semantic_release.commit_parser.util import parse_paragraphs
+from semantic_release.commit_parser.util import (
+    ParsedCommit,
+    ParseResult,
+    parse_paragraphs,
+)
 from semantic_release.enums import LevelBump
 
 logger = logging.getLogger(__name__)

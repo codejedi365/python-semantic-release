@@ -14,7 +14,7 @@ from semantic_release.changelog.context import make_changelog_context
 from semantic_release.changelog.release_history import ReleaseHistory
 from semantic_release.cli import config as cliConfigModule
 from semantic_release.commit_parser._base import CommitParser, ParserOptions
-from semantic_release.commit_parser.token import ParsedCommit, ParseResult
+from semantic_release.commit_parser.util import ParsedCommit, ParseResult
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from git import Commit, Repo
 
     from semantic_release.cli.config import RuntimeContext
-    from semantic_release.commit_parser.token import ParseError
+    from semantic_release.commit_parser.util import ParseError
 
     _R = TypeVar("_R")
 

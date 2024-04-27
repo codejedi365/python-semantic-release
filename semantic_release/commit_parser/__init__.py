@@ -18,7 +18,7 @@ from semantic_release.commit_parser.tag import (
     TagCommitParser,
     TagParserOptions,
 )
-from semantic_release.commit_parser.token import (
+from semantic_release.commit_parser.util import (
     ParsedCommit,
     ParseError,
     ParseResult,

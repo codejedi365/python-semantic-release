@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING, Tuple
 from pydantic.dataclasses import dataclass
 
 from semantic_release.commit_parser._base import CommitParser, ParserOptions
-from semantic_release.commit_parser.token import ParsedCommit, ParseError, ParseResult
+from semantic_release.commit_parser.util import ParsedCommit, ParseError, ParseResult
 from semantic_release.enums import LevelBump
 
 if TYPE_CHECKING:
