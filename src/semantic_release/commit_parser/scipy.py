@@ -182,9 +182,6 @@ class ScipyParserOptions(ParserOptions):
 class ScipyCommitParser(CommitParser[ParseResult, ScipyParserOptions]):
     """Parser for scipy-style commit messages"""
 
-    # TODO: Deprecate in lieu of get_default_options()
-    parser_options = ScipyParserOptions
-
     def __init__(self, options: ScipyParserOptions | None = None) -> None:
         super().__init__(options)
 

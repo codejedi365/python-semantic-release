@@ -415,23 +415,16 @@ class RawConfig(BaseModel):
             parser_opts_type = None
             # If the commit parser is a known one, pull the default options object from it
             if self.commit_parser in _known_commit_parsers:
-                # TODO: BREAKING CHANGE v11
-                # parser_opts_type = (
-                #     _known_commit_parsers[self.commit_parser]
-                #     .get_default_options()
-                #     .__class__
-                # )
-                parser_opts_type = _known_commit_parsers[
-                    self.commit_parser
-                ].parser_options
+                parser_opts_type = (
+                    _known_commit_parsers[self.commit_parser]
+                    .get_default_options()
+                    .__class__
+                )
             else:
                 try:
                     # if its a custom parser, try to import it and pull the default options object type
                     custom_class = dynamic_import(self.commit_parser)
-                    # TODO: BREAKING CHANGE v11
-                    # parser_opts_type = custom_class.get_default_options().__class__
-                    if hasattr(custom_class, "parser_options"):
-                        parser_opts_type = custom_class.parser_options
+                    parser_opts_type = custom_class.get_default_options().__class__
 
                 except ModuleNotFoundError as err:
                     raise ParserLoadError(
@@ -668,9 +661,7 @@ class RuntimeContext:
                 )
             ) from err
 
-        commit_parser_opts_class = commit_parser_cls.parser_options
-        # TODO: Breaking change v11
-        # commit_parser_opts_class = commit_parser_cls.get_default_options().__class__
+        commit_parser_opts_class = commit_parser_cls.get_default_options().__class__
         try:
             commit_parser = commit_parser_cls(
                 options=commit_parser_opts_class(**raw.commit_parser_options)
