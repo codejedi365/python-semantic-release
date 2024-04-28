@@ -65,9 +65,6 @@ class ConventionalCommitParser(
     See https://www.conventionalcommits.org/en/v1.0.0/
     """
 
-    # TODO: Deprecate in lieu of get_default_options()
-    parser_options = ConventionalCommitParserOptions
-
     # GitHub & Gitea use (#123), GitLab uses (!123), and BitBucket uses (pull request #123)
     mr_selector = regexp(r"[\t ]+\((?:pull request )?(?P<mr_number>[#!]\d+)\)[\t ]*$")
 
