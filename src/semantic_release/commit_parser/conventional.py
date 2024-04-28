@@ -125,9 +125,6 @@ class ConventionalCommitParser(
     See https://www.conventionalcommits.org/en/v1.0.0/
     """
 
-    # TODO: Deprecate in lieu of get_default_options()
-    parser_options = ConventionalCommitParserOptions
-
     def __init__(self, options: ConventionalCommitParserOptions | None = None) -> None:
         super().__init__(options)
 

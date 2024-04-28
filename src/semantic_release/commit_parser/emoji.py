@@ -137,9 +137,6 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
     the commit subject in the changelog.
     """
 
-    # TODO: Deprecate in lieu of get_default_options()
-    parser_options = EmojiParserOptions
-
     def __init__(self, options: EmojiParserOptions | None = None) -> None:
         super().__init__(options)
 
