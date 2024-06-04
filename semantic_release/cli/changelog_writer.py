@@ -154,7 +154,7 @@ def generate_release_notes(
         repo_name=hvcs_client.repo_name,
         repo_owner=hvcs_client.owner,
         hvcs_type=hvcs_client.__class__.__name__.lower(),
-        version=release["version"],
+        version=release.version,
         release=release,
         filters=(*hvcs_client.get_changelog_context_filters(),),
     ).bind_to_environment(

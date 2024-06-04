@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, NoReturn, TypeVar, Union
+from typing import TYPE_CHECKING, NamedTuple, TypeVar, Union
 
+from git.objects.commit import Commit  # noqa: TCH002, required for pydantic
+
+from semantic_release.enums import LevelBump  # noqa: TCH001, required for pydantic
 from semantic_release.errors import CommitParseError
 
 if TYPE_CHECKING:
-    from git.objects.commit import Commit
-
-    from semantic_release.enums import LevelBump
+    from typing import NoReturn
 
 
 class ParsedCommit(NamedTuple):

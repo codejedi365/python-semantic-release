@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -161,10 +162,11 @@ def artificial_release_history(commit_author: Actor):
                 tagger=commit_author,
                 committer=commit_author,
                 tagged_date=datetime.now(),
-                elements={
-                    "feature": [feat_commit_parsed],
-                    "fix": [fix_commit_parsed],
-                },
+                elements=defaultdict(
+                    feature=[feat_commit_parsed],
+                    fix=[fix_commit_parsed],
+                ),
+                version=version,
             )
         },
     )

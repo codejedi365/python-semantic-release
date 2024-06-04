@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -81,10 +82,11 @@ def artificial_release_history(commit_author: Actor):
                 tagger=commit_author,
                 committer=commit_author,
                 tagged_date=datetime.now(),
-                elements={
-                    "feature": [feat_commit_parsed],
-                    "fix": [fix_commit_parsed],
-                },
+                elements=defaultdict(
+                    feature=[feat_commit_parsed],
+                    fix=[fix_commit_parsed],
+                ),
+                version=version,
             )
         },
     )
@@ -103,15 +105,15 @@ def test_default_changelog_template(
     rh.unreleased = {}  # Wipe out unreleased
     hvcs = hvcs_client(example_git_https_url)
 
-    feat_commit_obj = artificial_release_history.released[version]["elements"][
-        "feature"
-    ][0]
+    feat_commit_obj = artificial_release_history.released[version].elements["feature"][
+        0
+    ]
     assert isinstance(feat_commit_obj, ParsedCommit)
 
     feat_commit_url = hvcs.commit_hash_url(feat_commit_obj.commit.hexsha)
     feat_description = str.join("\n", feat_commit_obj.descriptions)
 
-    fix_commit_obj = artificial_release_history.released[version]["elements"]["fix"][0]
+    fix_commit_obj = artificial_release_history.released[version].elements["fix"][0]
     fix_commit_url = hvcs.commit_hash_url(fix_commit_obj.commit.hexsha)
 
     assert isinstance(fix_commit_obj, ParsedCommit)
@@ -150,15 +152,15 @@ def test_default_changelog_template_w_unreleased_changes(
     version = Version.parse(version_str)
     hvcs = hvcs_client(example_git_https_url)
 
-    feat_commit_obj = artificial_release_history.released[version]["elements"][
-        "feature"
-    ][0]
+    feat_commit_obj = artificial_release_history.released[version].elements["feature"][
+        0
+    ]
     assert isinstance(feat_commit_obj, ParsedCommit)
 
     feat_commit_url = hvcs.commit_hash_url(feat_commit_obj.commit.hexsha)
     feat_description = str.join("\n", feat_commit_obj.descriptions)
 
-    fix_commit_obj = artificial_release_history.released[version]["elements"]["fix"][0]
+    fix_commit_obj = artificial_release_history.released[version].elements["fix"][0]
     fix_commit_url = hvcs.commit_hash_url(fix_commit_obj.commit.hexsha)
 
     assert isinstance(fix_commit_obj, ParsedCommit)

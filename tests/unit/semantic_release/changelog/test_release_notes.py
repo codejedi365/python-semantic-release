@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -55,9 +56,10 @@ def artificial_release_history(commit_author: Actor):
                 tagger=commit_author,
                 committer=commit_author,
                 tagged_date=datetime.now(),
-                elements={
-                    "fix": [fix_commit_parsed],
-                },
+                elements=defaultdict(
+                    fix=[fix_commit_parsed],
+                ),
+                version=version,
             )
         },
     )
@@ -86,7 +88,7 @@ def test_default_release_notes_template(
     """
     version_str = "1.1.0-alpha.3"
     version = Version.parse(version_str)
-    commit_obj = artificial_release_history.released[version]["elements"]["fix"][0]
+    commit_obj = artificial_release_history.released[version].elements["fix"][0]
     commit_url = hvcs_client(example_git_https_url).commit_hash_url(
         commit_obj.commit.hexsha
     )

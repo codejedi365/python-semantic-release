@@ -2,28 +2,28 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
-from git.objects.tag import TagObject
+from git.util import Actor  # noqa: TCH002, required for pydantic
 
-from semantic_release.commit_parser import ParseError
+from semantic_release.commit_parser import (
+    ParseError,
+    ParseResult,  # noqa: TCH001, required for pydantic
+)
 from semantic_release.version.algorithm import tags_and_versions
+from semantic_release.version.release import Release
 
 if TYPE_CHECKING:
+    from datetime import datetime
     from re import Pattern
     from typing import Iterable, Iterator
 
     from git.repo.base import Repo
-    from git.util import Actor
 
-    from semantic_release.commit_parser import (
-        CommitParser,
-        ParseResult,
-        ParserOptions,
-    )
+    from semantic_release.commit_parser import CommitParser, ParserOptions
     from semantic_release.version.translator import VersionTranslator
     from semantic_release.version.version import Version
+
 
 log = logging.getLogger(__name__)
 
@@ -84,30 +84,7 @@ class ReleaseHistory:
                 log.debug("found commit %s for tag %s", commit.hexsha, tag.name)
                 is_commit_released = True
 
-                # tag.object is a Commit if the tag is lightweight, otherwise
-                # it is a TagObject with additional metadata about the tag
-                if isinstance(tag.object, TagObject):
-                    tagger = tag.object.tagger
-                    committer = tag.object.tagger.committer()
-                    _tz = timezone(timedelta(seconds=-1 * tag.object.tagger_tz_offset))
-                    tagged_date = datetime.fromtimestamp(tag.object.tagged_date, tz=_tz)
-                else:
-                    # For some reason, sometimes tag.object is a Commit
-                    tagger = tag.object.author
-                    committer = tag.object.author
-                    _tz = timezone(timedelta(seconds=-1 * tag.object.author_tz_offset))
-                    tagged_date = datetime.fromtimestamp(
-                        tag.object.committed_date, tz=_tz
-                    )
-
-                release = Release(
-                    tagger=tagger,
-                    committer=committer,
-                    tagged_date=tagged_date,
-                    elements=defaultdict(list),
-                    version=the_version,
-                )
-
+                release = Release.from_git_tag(tag, translator)
                 released.setdefault(the_version, release)
 
             if any(pat.match(commit_message) for pat in exclude_commit_patterns):
@@ -133,7 +110,7 @@ class ReleaseHistory:
                 the_version,
             )
 
-            released[the_version]["elements"][commit_type].append(parse_result)
+            released[the_version].elements[commit_type].append(parse_result)
 
         return cls(unreleased=unreleased, released=released)
 
@@ -166,13 +143,15 @@ class ReleaseHistory:
         return ReleaseHistory(
             unreleased={},
             released={
-                version: {
-                    "tagger": tagger,
-                    "committer": committer,
-                    "tagged_date": tagged_date,
-                    "elements": self.unreleased,
-                    "version": version,
-                },
+                version: Release.model_validate(
+                    {
+                        "tagger": tagger,
+                        "committer": committer,
+                        "tagged_date": tagged_date,
+                        "elements": self.unreleased,
+                        "version": version,
+                    }
+                ),
                 **self.released,
             },
         )
@@ -183,11 +162,3 @@ class ReleaseHistory:
             f"{sum(len(commits) for commits in self.unreleased.values())} "
             f"commits unreleased, {len(self.released)} versions released>"
         )
-
-
-class Release(TypedDict):
-    tagger: Actor
-    committer: Actor
-    tagged_date: datetime
-    elements: dict[str, list[ParseResult]]
-    version: Version
