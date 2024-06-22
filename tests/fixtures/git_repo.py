@@ -49,11 +49,11 @@ if TYPE_CHECKING:
     from semantic_release.commit_parser.angular import AngularCommitParser
     from semantic_release.commit_parser.emoji import EmojiCommitParser
     from semantic_release.commit_parser.scipy import ScipyCommitParser
-    from semantic_release.hvcs import HvcsBase
     from semantic_release.hvcs.bitbucket import Bitbucket
     from semantic_release.hvcs.gitea import Gitea
     from semantic_release.hvcs.github import Github
     from semantic_release.hvcs.gitlab import Gitlab
+    from semantic_release.hvcs import RvcsInterface
 
     from tests.conftest import (
         BuildRepoOrCopyCacheFn,
@@ -122,7 +122,7 @@ if TYPE_CHECKING:
             tag_format_str: str | None = None,
             extra_configs: dict[str, TomlSerializableTypes] | None = None,
             mask_initial_release: bool = False,
-        ) -> tuple[Path, HvcsBase]: ...
+        ) -> tuple[Path, RvcsInterface]: ...
 
     class CommitNReturnChangelogEntryFn(Protocol):
         def __call__(self, git_repo: Repo, commit_def: CommitDef) -> CommitDef: ...
@@ -898,7 +898,7 @@ def build_configured_base_repo(  # noqa: C901
         tag_format_str: str | None = None,
         extra_configs: dict[str, TomlSerializableTypes] | None = None,
         mask_initial_release: bool = False,
-    ) -> tuple[Path, HvcsBase]:
+    ) -> tuple[Path, RvcsInterface]:
         if not cached_example_git_project.exists():
             raise RuntimeError("Unable to find cached git project files!")
 
