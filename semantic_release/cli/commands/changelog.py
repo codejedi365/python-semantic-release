@@ -14,7 +14,8 @@ from semantic_release.cli.common import (
     render_release_notes,
 )
 from semantic_release.cli.util import noop_report
-from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
+from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -70,7 +71,7 @@ def post_release_notes(
     release_tag: str,
     release_notes: str,
     prerelease: bool,
-    hvcs_client: RemoteHvcsBase,
+    hvcs_client: ReleaseSupportInterface,
     noop: bool = False,
 ) -> None:
     if noop:
@@ -120,7 +121,10 @@ def changelog(cli_ctx: CliContextObj, release_tag: str | None) -> None:
     )
 
     changelog_context = make_changelog_context(
-        hvcs_client=hvcs_client, release_history=release_history,
+        repo_name=hvcs_client.get_repo_name(),
+        repo_namespace=hvcs_client.get_owner_namespace(),
+        release_history=release_history,
+        hvcs_client=hvcs_client if isinstance(hvcs_client, HvcsChangelogClientInterface) else None,
     )
 
     changelog_context.bind_to_environment(env)
@@ -151,7 +155,7 @@ def changelog(cli_ctx: CliContextObj, release_tag: str | None) -> None:
     if not release_tag:
         return
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
+    if not isinstance(hvcs_client, ReleaseSupportInterface):
         log.info(
             "Remote does not support releases. Skipping release notes update..."
         )

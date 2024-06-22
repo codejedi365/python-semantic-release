@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import click
 
 from semantic_release.cli.util import noop_report
+from semantic_release.hvcs.i_hvcs_publish import HvcsPublishingClientInterface
 from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
 from semantic_release.version import tags_and_versions
 
@@ -19,7 +20,7 @@ log = logging.getLogger(__name__)
 
 def publish_distributions(
     tag: str,
-    hvcs_client: RemoteHvcsBase,
+    hvcs_client: HvcsPublishingClientInterface,
     dist_glob_patterns: Tuple[str, ...],
     noop: bool = False
 ) -> None:
@@ -35,7 +36,7 @@ def publish_distributions(
 
     log.info("Uploading distributions to release")
     for pattern in dist_glob_patterns:
-        hvcs_client.upload_dists(tag=tag, dist_glob=pattern)  # type: ignore[attr-defined]
+        hvcs_client.upload_dists(tag=tag, dist_glob=pattern)
 
 
 @click.command(
@@ -72,7 +73,7 @@ def publish(cli_ctx: CliContextObj, tag: str) -> None:
                 ])
             )
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
+    if not isinstance(hvcs_client, HvcsPublishingClientInterface):
         log.info(
             "Remote does not support artifact upload. Exiting with no action taken..."
         )

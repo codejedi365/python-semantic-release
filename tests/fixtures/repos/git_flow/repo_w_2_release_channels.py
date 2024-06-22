@@ -12,7 +12,7 @@ from tests.util import copy_dir_tree, temporary_working_directory
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
 
     from tests.conftest import TeardownCachedDirFn
     from tests.fixtures.example_project import ExProjectDir
@@ -243,7 +243,7 @@ def build_git_flow_repo_with_2_release_channels(
         hvcs_domain: str = EXAMPLE_HVCS_DOMAIN,
         tag_format_str: str | None = None,
         extra_configs: dict[str, TomlSerializableTypes] | None = None,
-    ) -> tuple[Path, HvcsBase]:
+    ) -> tuple[Path, RvcsInterface]:
         repo_dir, hvcs = build_configured_base_repo(
             dest_dir,
             commit_type=commit_type,
