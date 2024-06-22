@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from typing import Any, Protocol, Sequence
 
     from semantic_release.commit_parser import CommitParser
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
     from semantic_release.version.version import Version
 
     from tests.conftest import (
@@ -62,7 +62,7 @@ if TYPE_CHECKING:
         def __call__(self, module_import_str: str) -> None: ...
 
     class UseHvcsFn(Protocol):
-        def __call__(self, domain: str | None = None) -> type[HvcsBase]: ...
+        def __call__(self, domain: str | None = None) -> type[RvcsInterface]: ...
 
     class UseParserFn(Protocol):
         def __call__(self) -> type[CommitParser]: ...
@@ -510,7 +510,7 @@ def use_custom_parser(
 def use_github_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
     """Modify the configuration file to use GitHub as the HVCS."""
 
-    def _use_github_hvcs(domain: str | None = None) -> type[HvcsBase]:
+    def _use_github_hvcs(domain: str | None = None) -> type[RvcsInterface]:
         update_pyproject_toml("tool.semantic_release.remote.type", "github")
         if domain is not None:
             update_pyproject_toml("tool.semantic_release.remote.domain", domain)
@@ -523,7 +523,7 @@ def use_github_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
 def use_gitlab_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
     """Modify the configuration file to use GitLab as the HVCS."""
 
-    def _use_gitlab_hvcs(domain: str | None = None) -> type[HvcsBase]:
+    def _use_gitlab_hvcs(domain: str | None = None) -> type[RvcsInterface]:
         update_pyproject_toml("tool.semantic_release.remote.type", "gitlab")
         if domain is not None:
             update_pyproject_toml("tool.semantic_release.remote.domain", domain)
@@ -536,7 +536,7 @@ def use_gitlab_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
 def use_gitea_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
     """Modify the configuration file to use Gitea as the HVCS."""
 
-    def _use_gitea_hvcs(domain: str | None = None) -> type[HvcsBase]:
+    def _use_gitea_hvcs(domain: str | None = None) -> type[RvcsInterface]:
         update_pyproject_toml("tool.semantic_release.remote.type", "gitea")
         if domain is not None:
             update_pyproject_toml("tool.semantic_release.remote.domain", domain)
@@ -549,7 +549,7 @@ def use_gitea_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
 def use_bitbucket_hvcs(update_pyproject_toml: UpdatePyprojectTomlFn) -> UseHvcsFn:
     """Modify the configuration file to use BitBucket as the HVCS."""
 
-    def _use_bitbucket_hvcs(domain: str | None = None) -> type[HvcsBase]:
+    def _use_bitbucket_hvcs(domain: str | None = None) -> type[RvcsInterface]:
         update_pyproject_toml("tool.semantic_release.remote.type", "bitbucket")
         if domain is not None:
             update_pyproject_toml("tool.semantic_release.remote.domain", domain)
