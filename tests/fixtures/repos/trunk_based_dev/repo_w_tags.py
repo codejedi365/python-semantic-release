@@ -26,9 +26,7 @@ if TYPE_CHECKING:
         GetMd5ForSetOfFilesFn,
         GetStableDateNowFn,
     )
-    from tests.fixtures.example_project import (
-        ExProjectDir,
-    )
+    from tests.fixtures.example_project import ExProjectDir
     from tests.fixtures.git_repo import (
         BuildRepoFromDefinitionFn,
         BuildRepoOrCopyCacheFn,
