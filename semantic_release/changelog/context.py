@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from jinja2 import Environment
 
     from semantic_release.changelog.release_history import Release, ReleaseHistory
-    from semantic_release.hvcs._base import HvcsBase
+    from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
     from semantic_release.version.version import Version
 
 
@@ -37,6 +37,7 @@ class ReleaseNotesContext:
 @dataclass
 class ChangelogContext:
     repo_name: str
+    # TODO: change repo_owner to repo_namespace
     repo_owner: str
     hvcs_type: str
     history: ReleaseHistory
@@ -49,13 +50,23 @@ class ChangelogContext:
         return env
 
 
+# TODO: is this even necessary?
 def make_changelog_context(
-    hvcs_client: HvcsBase, release_history: ReleaseHistory
+    repo_name: str,
+    repo_namespace: str,
+    release_history: ReleaseHistory,
+    hvcs_client: HvcsChangelogClientInterface | None = None,
 ) -> ChangelogContext:
+    hvcs_filters = () if hvcs_client is None else hvcs_client.get_changelog_context_filters()
+
     return ChangelogContext(
-        repo_name=hvcs_client.repo_name,
-        repo_owner=hvcs_client.owner,
+        repo_name=repo_name,
+        repo_owner=repo_namespace,
         history=release_history,
-        hvcs_type=hvcs_client.__class__.__name__.lower(),
-        filters=(*hvcs_client.get_changelog_context_filters(),),
+        hvcs_type=(
+            str(None).lower()
+            if hvcs_client is None
+            else hvcs_client.__class__.__name__.lower()
+        ),
+        filters=(*hvcs_filters,),
     )
