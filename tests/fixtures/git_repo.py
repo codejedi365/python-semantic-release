@@ -23,7 +23,7 @@ from tests.util import (
 if TYPE_CHECKING:
     from typing import Generator, Protocol, TypedDict, Union
 
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
 
     from tests.conftest import TeardownCachedDirFn
     from tests.fixtures.example_project import (
@@ -70,14 +70,14 @@ if TYPE_CHECKING:
             hvcs_domain: str = ...,
             tag_format_str: str | None = None,
             extra_configs: dict[str, TomlSerializableTypes] | None = None,
-        ) -> tuple[Path, HvcsBase]: ...
+        ) -> tuple[Path, RvcsInterface]: ...
 
     class CommitNReturnChangelogEntryFn(Protocol):
-        def __call__(self, git_repo: Repo, commit_msg: str, hvcs: HvcsBase) -> str: ...
+        def __call__(self, git_repo: Repo, commit_msg: str, hvcs: RvcsInterface) -> str: ...
 
     class SimulateChangeCommitsNReturnChangelogEntryFn(Protocol):
         def __call__(
-            self, git_repo: Repo, commit_msgs: list[CommitMsg], hvcs: HvcsBase
+            self, git_repo: Repo, commit_msgs: list[CommitMsg], hvcs: RvcsInterface
         ) -> list[CommitMsg]: ...
 
     class CreateReleaseFn(Protocol):
@@ -161,7 +161,7 @@ def create_release_tagged_commit(
 @pytest.fixture(scope="session")
 def commit_n_rtn_changelog_entry() -> CommitNReturnChangelogEntryFn:
     def _commit_n_rtn_changelog_entry(
-        git_repo: Repo, commit_msg: str, hvcs: HvcsBase
+        git_repo: Repo, commit_msg: str, hvcs: RvcsInterface
     ) -> str:
         # make commit with --all files
         git_repo.git.commit(a=True, m=commit_msg)
@@ -185,7 +185,7 @@ def simulate_change_commits_n_rtn_changelog_entry(
     file_in_repo: str,
 ) -> SimulateChangeCommitsNReturnChangelogEntryFn:
     def _simulate_change_commits_n_rtn_changelog_entry(
-        git_repo: Repo, commit_msgs: list[str], hvcs: HvcsBase
+        git_repo: Repo, commit_msgs: list[str], hvcs: RvcsInterface
     ) -> list[str]:
         changelog_entries = []
         for commit_msg in commit_msgs:
@@ -272,7 +272,7 @@ def build_configured_base_repo(  # noqa: C901
         hvcs_domain: str = EXAMPLE_HVCS_DOMAIN,
         tag_format_str: str | None = None,
         extra_configs: dict[str, TomlSerializableTypes] | None = None,
-    ) -> tuple[Path, HvcsBase]:
+    ) -> tuple[Path, RvcsInterface]:
         if not cached_example_git_project.exists():
             raise RuntimeError("Unable to find cached git project files!")
 

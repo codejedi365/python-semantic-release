@@ -14,6 +14,8 @@ from semantic_release.changelog.context import (
 )
 from semantic_release.changelog.template import environment, recursive_render
 from semantic_release.cli.util import noop_report
+from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
+from semantic_release.hvcs.i_rvcs import RvcsInterface
 
 if TYPE_CHECKING:
     from jinja2 import Environment
@@ -108,14 +110,16 @@ def write_default_changelog(
 def write_changelog_files(
     runtime_ctx: RuntimeContext,
     release_history: ReleaseHistory,
-    hvcs_client: HvcsBase,
+    hvcs_client: RvcsInterface,
     noop: bool = False,
 ) -> list[str]:
     project_dir = Path(runtime_ctx.repo_dir)
     template_dir = runtime_ctx.template_dir
 
     changelog_context = make_changelog_context(
-        hvcs_client=hvcs_client,
+        repo_name=hvcs_client.get_repo_name(),
+        repo_namespace=hvcs_client.get_owner_namespace(),
+        hvcs_client=hvcs_client if isinstance(hvcs_client, HvcsChangelogClientInterface) else None,
         release_history=release_history,
     )
 

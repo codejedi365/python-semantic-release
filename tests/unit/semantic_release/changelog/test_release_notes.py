@@ -25,7 +25,7 @@ from tests.const import TODAY_DATE_STR
 if TYPE_CHECKING:
     from git import Actor
 
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
 
 
 @pytest.fixture
@@ -75,7 +75,7 @@ def release_notes_template() -> str:
 @pytest.mark.parametrize("hvcs_client", [Github, Gitlab, Gitea, Bitbucket])
 def test_default_release_notes_template(
     example_git_https_url: str,
-    hvcs_client: type[HvcsBase],
+    hvcs_client: type[RvcsInterface],
     release_notes_template: str,
     artificial_release_history: ReleaseHistory,
 ):
