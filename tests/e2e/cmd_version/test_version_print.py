@@ -948,3 +948,148 @@ def test_version_print_next_tag_fails_on_detached_head(
     assert not tags_set_difference
     assert mocked_git_push.call_count == 0
     assert post_mocker.call_count == 0
+
+
+# TODO: must update version and Runtime Context to handle this appropriately
+@pytest.mark.xfail(reason="Not implemented Yet")
+def test_version_print_next_version_works_on_detached_head_with_prerelease_token(
+    cli_runner: CliRunner,
+    repo_w_trunk_only_angular_commits: BuiltRepoResult,
+    simulate_change_commits_n_rtn_changelog_entry: SimulateChangeCommitsNReturnChangelogEntryFn,
+    get_commit_def_of_angular_commit: GetCommitDefFn,
+):
+    # Hardcoded values for results
+    token = "alpha"
+    expected_next_version = f"0.1.2-{token}.1"
+
+    # setup
+    repo = repo_w_trunk_only_angular_commits["repo"]
+    repo.git.checkout("HEAD", detach=True)
+    simulate_change_commits_n_rtn_changelog_entry(
+        git_repo=repo,
+        commit_msgs=[
+            get_commit_def_of_angular_commit("fix: make a patch fix to codebase")
+        ],
+    )
+
+    cli_cmd = [
+        MAIN_PROG_NAME,
+        VERSION_SUBCMD,
+        "--print",
+        "--as-prerelease",
+        "--prerelease-token",
+        token,
+    ]
+
+    # Act
+    result = cli_runner.invoke(main, cli_cmd[1:])
+
+    # Evaluate (expected -> actual)
+    assert_successful_exit_code(result, cli_cmd)
+    assert not result.stderr
+    assert expected_next_version == result.stdout.rstrip()
+
+
+# TODO: must update version and Runtime Context to handle this appropriately
+@pytest.mark.xfail(reason="Not implemented Yet")
+def test_version_print_next_version_tag_works_on_detached_head_with_prerelease_token(
+    cli_runner: CliRunner,
+    example_git_ssh_url: str,
+    repo_w_trunk_only_angular_commits: BuiltRepoResult,
+    simulate_change_commits_n_rtn_changelog_entry: SimulateChangeCommitsNReturnChangelogEntryFn,
+    get_commit_def_of_angular_commit: GetCommitDefFn,
+):
+    # Hardcoded values for results
+    token = "alpha"
+    expected_next_version_tag = f"v0.1.2-{token}.1"
+
+    # setup
+    repo = repo_w_trunk_only_angular_commits["repo"]
+    repo.git.checkout("HEAD", detach=True)
+    simulate_change_commits_n_rtn_changelog_entry(
+        git_repo=repo,
+        commit_msgs=[
+            get_commit_def_of_angular_commit("fix: make a patch fix to codebase")
+        ],
+    )
+
+    cli_cmd = [
+        MAIN_PROG_NAME,
+        VERSION_SUBCMD,
+        "--print-tag",
+        "--as-prerelease",
+        "--prerelease-token",
+        token,
+    ]
+
+    # Act
+    result = cli_runner.invoke(main, cli_cmd[1:])
+
+    # Evaluate (expected -> actual)
+    assert_successful_exit_code(result, cli_cmd)
+    assert not result.stderr
+    assert expected_next_version_tag == result.stdout.rstrip()
+
+
+# TODO: must update version and Runtime Context to handle this appropriately
+@pytest.mark.xfail(reason="Not implemented Yet")
+def test_version_print_next_version_warning_on_nonrelease_branch(
+    cli_runner: CliRunner,
+    example_git_ssh_url: str,
+    repo_w_trunk_only_angular_commits: BuiltRepoResult,
+    simulate_change_commits_n_rtn_changelog_entry: SimulateChangeCommitsNReturnChangelogEntryFn,
+    get_commit_def_of_angular_commit: GetCommitDefFn,
+):
+    # Hardcoded values for results
+    expected_next_version = "0.1.2"
+
+    # setup
+    repo = repo_w_trunk_only_angular_commits["repo"]
+    repo.create_head("next").checkout()
+    simulate_change_commits_n_rtn_changelog_entry(
+        git_repo=repo,
+        commit_msgs=[
+            get_commit_def_of_angular_commit("fix: make a patch fix to codebase")
+        ],
+    )
+
+    cli_cmd = [MAIN_PROG_NAME, VERSION_SUBCMD, "--print"]
+
+    # Act
+    result = cli_runner.invoke(main, cli_cmd[1:])
+
+    # Evaluate (expected -> actual)
+    assert_successful_exit_code(result, cli_cmd)
+    # TODO: error in stderr
+    assert not result.stderr
+    assert expected_next_version == result.stdout.rstrip()
+
+
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_version_print_next_version_error_when_strict_on_nonrelease_branch(
+    cli_runner: CliRunner,
+    example_git_ssh_url: str,
+    repo_w_trunk_only_angular_commits: BuiltRepoResult,
+    simulate_change_commits_n_rtn_changelog_entry: SimulateChangeCommitsNReturnChangelogEntryFn,
+    get_commit_def_of_angular_commit: GetCommitDefFn,
+):
+    # setup
+    repo = repo_w_trunk_only_angular_commits["repo"]
+    repo.create_head("next").checkout()
+    simulate_change_commits_n_rtn_changelog_entry(
+        git_repo=repo,
+        commit_msgs=[
+            get_commit_def_of_angular_commit("fix: make a patch fix to codebase")
+        ],
+    )
+
+    cli_cmd = [MAIN_PROG_NAME, "--strict", VERSION_SUBCMD, "--print"]
+
+    # Act
+    result = cli_runner.invoke(main, cli_cmd[1:])
+
+    # Evaluate (expected -> actual)
+    assert_exit_code(2, result, cli_cmd)
+    assert not result.stdout
+    # TODO: error message
+    assert "" in result.stderr
