@@ -677,7 +677,6 @@ def version(  # noqa: C901
         hvcs_client,
         release=release_history.released[new_version],
         template_dir=runtime.template_dir,
-        history=release_history,
         style=runtime.changelog_style,
         mask_initial_release=runtime.changelog_mask_initial_release,
         license_name="" if not isinstance(license_cfg, str) else license_cfg,
