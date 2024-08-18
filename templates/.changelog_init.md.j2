@@ -1,0 +1,48 @@
+{#
+This changelog template initializes a full changelog for the project,
+it follows the following logic:
+  1. Header
+  2. New Changes (unreleased commits & newly released)
+  3. all previous releases except the very first release
+  4. the first release
+
+#}{% set releases = context.history.released.items() | list
+%}{% set new_releases = []
+%}{% if releases | length > 1
+%}{#    # Grab the latest release and set it aside for the new release
+#}{%    set new_releases = [releases.pop(0)]
+%}{% endif
+%}{#
+   # Header
+#}{% include ".changelog_header.md.j2"
+-%}{{ "\n"
+}}{#
+   # Any Unreleased Details (uncommon)
+#}{% include ".unreleased_changes.md.j2"
+%}{#
+   # Latest Release Details
+#}{% for version, release in new_releases
+%}{{    "\n"
+}}{%    include ".versioned_changes.md.j2"
+-%}{{   "\n"
+}}{% endfor
+%}{#
+   # Since this is initialization, we are generating all the previous
+   # release notes per version. The very first release notes is specialized
+#}{% if releases | length - 1 > 0
+%}{%    for version, release in releases[:-1]
+%}{{        "\n"
+}}{%        include ".versioned_changes.md.j2"
+-%}{{       "\n"
+}}{%    endfor
+%}{% endif
+%}{#
+   # First Release
+#}{% if releases | length > 0
+%}{%    for version, release in [releases | last]
+%}{{        "\n"
+}}{%        include ".first_release.md.j2"
+-%}{{       "\n"
+}}{%    endfor
+%}{% endif
+%}

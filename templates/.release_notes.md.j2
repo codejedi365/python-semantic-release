@@ -1,0 +1,10 @@
+{%   set releases = context.history.released.items() | list
+%}{% set prev_version_tag = releases[1][0].as_tag()
+%}{% set new_version_tag = version.as_tag()
+%}{% set version_compare_url = prev_version_tag | compare_url(new_version_tag)
+%}{% set detailed_changes_link = '[{}...{}]({})'.format(prev_version_tag, new_version_tag, version_compare_url)
+%}{#
+#}{% include ".versioned_changes.md.j2" %}
+---
+
+**Detailed Changes**: {{ detailed_changes_link }}
