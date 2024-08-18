@@ -1,0 +1,21 @@
+# CHANGELOG
+{#
+#}{% if context.history.unreleased | length > 0
+%}{{
+        "\n## Unreleased\n"
+
+}}{%    set commit_objects = context.history.unreleased
+%}{%    include ".changes.md.j2"
+%}{{    "\n"
+}}{% endif
+%}{#
+
+RELEASED
+
+#}{% for version, release in context.history.released.items()
+
+%}{%    include ".versioned_changes.md.j2"
+-%}{{   "\n"
+
+}}{% endfor
+%}

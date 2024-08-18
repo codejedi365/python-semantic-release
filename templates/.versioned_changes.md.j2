@@ -1,0 +1,14 @@
+{#
+
+## vX.X.X.X (YYYY-MMM-DD)
+
+#}{{
+
+    "## %s (%s)\n" | format(
+        version.as_tag(),
+        release.tagged_date.strftime("%Y-%m-%d")
+    )
+
+}}{% set commit_objects = release["elements"]
+%}{% include ".changes.md.j2"
+-%}
