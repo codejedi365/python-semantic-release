@@ -154,7 +154,6 @@ def changelog(cli_ctx: CliContextObj, release_tag: str | None) -> None:
         hvcs_client,
         release,
         runtime.template_dir,
-        release_history,
         style=runtime.changelog_style,
         mask_initial_release=runtime.changelog_mask_initial_release,
         license_name=get_license_name_for_release(
