@@ -1,0 +1,87 @@
+{% set emoji_map = {
+    'breaking': '💥',
+    'feature': '✨',
+    'fix': '🪲',
+    'performance': '⚡',
+    'refactor': '♻️',
+    'chore': '🧹',
+    'documentation': '📖',
+    'test': '✅',
+    'ci': '🤖',
+    'style': '🎨',
+    'build system': '⚙️',
+} %}
+{#
+    'unknown': '❗',
+#}
+
+{% macro commit_scope(commit_summary) %}{{ commit_summary.split(":")[0] }}{% endmacro %}
+{% macro commit_content(commit_summary) %}{{ commit_summary.split(":")[1] }}{% endmacro %}
+{% set section_heading_order = emoji_map.keys() %}
+
+{# MACRO: formats a commit message for a non-inline RST link for a commit hash or PR/MR #}
+{%   macro commit_msg_links(commit)
+%}{%    set description = commit.descriptions[0] | capitalize
+%}{#
+        # Replace PR references in the form of (!123) with a link to the PR
+#}{%    if description.split("(!") | length > 1
+%}{%        set pr_num = description.split("(!")[1].split(")")[0]
+%}{%        set replacement = "(`!%s`_)" | format(pr_num)
+%}{%        set description = description | replace("(!" ~ pr_num ~ ")", replacement)
+%}{#
+        # Replace PR references in the form of (#123) with a link to the PR
+#}{%    elif description.split("(#") | length > 1
+%}{%        set pr_num = description.split("(#")[1].split(")")[0]
+%}{%        set replacement = "(`#%s`_)" | format(pr_num)
+%}{%        set description = description | replace("(#" ~ pr_num ~ ")", replacement)
+%}{#
+        # DEFAULT: Append commit hash as url to the commit description
+#}{%    else
+%}{%        set description = "%s (`%s`_)" | format(
+                description | safe,
+                commit.short_hash,
+            )
+%}{%    endif
+%}{#
+        # Return the modified description
+#}{{    description | safe
+
+}}{% endmacro
+%}
+
+{# MACRO: format a post-paragraph link reference in RST #}
+{%    macro format_link_reference(link, label)
+%}{{    ".. _%s: %s" | format(label, link)
+}}{%  endmacro
+%}
+
+{%    macro extract_link_reference(commit)
+%}{%    set description = commit.descriptions[0]
+%}{#
+        # Create a MR reference url in the form of (!123)
+#}{%    if description.split("(!") | length > 1
+%}{%        set pr_num = description.split("(!")[1].split(")")[0]
+%}{{        format_link_reference(pr_num | merge_request_url, pr_num)
+}}{#
+        # Create a PR reference url in the form of (#123)
+#}{%    elif description.split("(#") | length > 1
+%}{%        set pr_num = description.split("(#")[1].split(")")[0]
+%}{{        format_link_reference(pr_num | pull_request_url, pr_num)
+}}{#
+        # DEFAULT: Create commit hash url reference
+#}{%    else
+%}{{        format_link_reference(commit.hexsha | commit_hash_url, commit.short_hash)
+}}{%    endif
+%}{%  endmacro
+%}
+
+{# MACRO: generate a heading underline that matches the exact length of the header #}
+{%    macro generate_heading_underline(header, underline_char)
+%}{%    set header_underline = []
+%}{%    for _ in header
+%}{{      header_underline.append(underline_char) | default("", true)
+}}{%    endfor
+%}{#    # Print out the header underline
+#}{{    header_underline | join
+}}{%  endmacro
+%}

@@ -1,0 +1,80 @@
+{%   from '.macros.rst.j2' import section_heading_order, emoji_map, commit_msg_links
+%}{% from '.macros.rst.j2' import extract_link_reference, generate_heading_underline
+%}{#
+
+Features
+""""""""
+
+* subject (`#29`_)
+
+* **scope:** subject (`8a7b8ec`_)
+
+Fixes
+"""""
+
+* **scope:** subject (`8a7b8ec`_)
+
+BREAKING CHANGES
+""""""""""""""""
+
+* description
+
+* **scope:** description
+
+.. _29: https://
+.. _8a7b8ec: https://
+
+#}{% set post_paragraph_links = []
+%}{#
+#}{% for type_ in section_heading_order if type_ in commit_objects
+%}{%    set section_header = "%s %s" | format(emoji_map[type_], type_ | capitalize)
+%}{#
+   #    Note: Must add an additional character to the section header when determining the underline because of
+   #    the emoji character which can serve as 2 characters in length.
+#}{{    "\n"
+}}{{    section_header ~ "\n"
+}}{{    generate_heading_underline(section_header ~ " ", '"') ~ "\n"
+}}{#
+#}{%    for commit in commit_objects[type_] | rejectattr("scope") | sort(attribute='descriptions.0')
+%}{%        set commit_link_reference = extract_link_reference(commit)
+%}{{        post_paragraph_links.append(commit_link_reference) | default("", true)
+}}{{
+            "\n* %s\n" | format(commit_msg_links(commit))
+
+}}{%    endfor
+%}{%    for commit in commit_objects[type_] | selectattr("scope") | sort(attribute='scope')
+%}{%        set commit_link_reference = extract_link_reference(commit)
+%}{{        post_paragraph_links.append(commit_link_reference) | default("", true)
+}}{{
+            "\n* **%s**: %s\n" | format(commit.scope, commit_msg_links(commit))
+
+}}{%    endfor
+%}{% endfor
+%}{#
+
+#}{% if "breaking" in commit_objects
+%}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
+%}{%    if breaking_commits | length > 0
+%}{{        "\n"
+}}{{        "BREAKING CHANGES\n"
+}}{{        '""""""""""""""""\n'
+}}{#
+#}{%        for commit in breaking_commits | rejectattr("scope") | sort(attribute='breaking_descriptions.0')
+%}{{
+                "\n* %s\n" | format(
+                    commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
+                )
+
+}}{%        endfor
+%}{%        for commit in breaking_commits | selectattr("scope") | sort(attribute='scope')
+%}{{
+                "\n* **%s**: %s\n" | format(
+                    commit.scope,
+                    commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
+                )
+
+}}{%        endfor
+%}{%    endif
+%}{% endif
+%}
+{{ post_paragraph_links | join("\n") }}
