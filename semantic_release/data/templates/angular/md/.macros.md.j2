@@ -66,8 +66,14 @@
 %}
 
 {#
-  MACRO: format commit summary line
+  MACRO: format the first line of the commit message with optional scope
+  - PR/MR links are added if found in the first line description
+  - commit hash links are always added
 #}{%  macro format_commit_summary_line(commit)
-%}{{    commit_msg_links(commit)
+%}{%    set summary_line = commit_msg_links(commit)
+%}{%    if commit.scope
+%}{%      set summary_line = "**%s**: %s" | format(commit.scope, summary_line)
+%}{%    endif
+%}{{    summary_line
 }}{%  endmacro
 %}
