@@ -1,43 +1,65 @@
-{% from '.macros.md.j2' import section_heading_order, emoji_map, commit_msg_links %}{#
+{% from '.macros.md.j2' import section_heading_order, emoji_map, commit_msg_links
+%}{#
 
-#}{% for type_ in section_heading_order if type_ in commit_objects
+### ✨ Features
+
+- Add new feature (#10, [`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
+
+- **scope**: Add new feature ([`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
+
+### 🪲 Bug Fixes
+
+- Fix bug (#11, [`abcdef1`](https://domain.com/namespace/repo/commit/HASH))
+
+### 💥 BREAKING CHANGES
+
+- With the change _____, the change causes ___ effect. Ultimately, this section
+  it is a more detailed description of the breaking change. With an optional
+  scope prefix like the commit messages above.
+
+TODO: comming soon
+### Resolved Issues
+
+- #000: _Issue Title_
+
+#}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{{
-        "\n### %s %s\n" | format(emoji_map[type_], type_ | capitalize)
+        "\n### %s %s\n" | format(emoji_map[type_], type_ | title)
 
 }}{%    for commit in commit_objects[type_] | rejectattr("scope") | sort(attribute='descriptions.0')
 %}{{
-            "\n- %s\n" | format(commit_msg_links(commit))
+          "\n- %s\n" | format(commit_msg_links(commit))
 
 }}{%    endfor
 %}{%    for commit in commit_objects[type_] | selectattr("scope") | sort(attribute='scope')
 %}{{
-            "\n- **%s**: %s\n" | format(commit.scope, commit_msg_links(commit))
+          "\n- **%s**: %s\n" | format(commit.scope, commit_msg_links(commit))
 
 }}{%    endfor
-%}{% endfor
+%}{%  endfor
 %}{#
 
-#}{% if "breaking" in commit_objects
+#}{%  if "breaking" in commit_objects
 %}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
 %}{%    if breaking_commits | length > 0
 %}{{
-            "\n### BREAKING CHANGES\n"
+          "\n### BREAKING CHANGES\n"
 }}{#
-#}{%        for commit in breaking_commits | rejectattr("scope") | sort(attribute='breaking_descriptions.0')
+#}{%      for commit in breaking_commits | rejectattr("scope") | sort(attribute='breaking_descriptions.0')
 %}{{
-                "\n- %s\n" | format(
-                    commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
-                )
+            "\n- %s\n" | format(
+              commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
+            )
 
-}}{%        endfor
-%}{%        for commit in breaking_commits | selectattr("scope") | sort(attribute='scope')
+}}{%      endfor
+%}{%      for commit in breaking_commits | selectattr("scope") | sort(attribute='scope')
 %}{{
-                "\n- **%s**: %s\n" | format(
-                    commit.scope,
-                    commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
-                )
+            "\n- **%s**: %s\n" | format(
+              commit.scope,
+              commit.breaking_descriptions | join("\n\n") | indent(4) | capitalize | safe
+            )
 
-}}{%        endfor
+}}{%      endfor
 %}{%    endif
-%}{% endif
+%}{%  endif
 %}
