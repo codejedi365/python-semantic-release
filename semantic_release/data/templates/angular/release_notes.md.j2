@@ -1,1 +1,20 @@
-{% include "./md/.versioned_changes.md.j2" %}
+{%    if 'compare_url' is filter
+%}{%    set releases = ctx.history.released.items() | list
+%}{%    set prev_version_tag = releases[1][0].as_tag()
+%}{%    set new_version_tag = release.version.as_tag()
+%}{%    set version_compare_url = prev_version_tag | compare_url(new_version_tag)
+%}{%    set detailed_changes_link = '[{}...{}]({})'.format(
+          prev_version_tag, new_version_tag, version_compare_url
+        )
+%}{%  endif
+%}{#
+#}{%  include "./md/.versioned_changes.md.j2"
+-%}{% if detailed_changes_link is defined
+%}{{    "\n"
+}}{{    "\n"
+}}{{    "---"
+}}{{    "\n"
+}}{{    "\n"
+}}{{    "**Detailed Changes**: %s" | format(detailed_changes_link)
+}}{%  endif
+%}
