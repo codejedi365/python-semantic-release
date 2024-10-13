@@ -12,6 +12,28 @@
 %}
 
 {#
+  MACRO: apply smart ordering of commits objects based on alphabetized breaking changes and then scopes
+  - Commits are sorted based on the commit type and the commit message
+  - Commits are grouped by the commit type
+#}{%  macro apply_alphabetical_ordering_by_brk_descriptions(commits)
+%}{%    set ordered_commits = []
+%}{#
+   #    # grab all commits with no scope and sort alphabetically by the first line of the commit message
+#}{%    for commit in commits | rejectattr("scope") | sort(attribute='breaking_descriptions.0')
+%}{{      ordered_commits.append(commit) | default("", true)
+}}{%     endfor
+%}{#
+   #    # grab all commits with a scope and sort alphabetically by the scope and then the first line of the commit message
+#}{%    for commit in commits | selectattr("scope") | sort(attribute='scope, breaking_descriptions.0')
+%}{{      ordered_commits.append(commit) | default("", true)
+}}{%    endfor
+%}{#
+   #    # Return the ordered commits
+#}{{    ordered_commits
+}}{%  endmacro
+%}
+
+{#
   MACRO: commit message links or PR/MR links of commit
 #}{%  macro commit_msg_links(commit)
 %}{%    set commit_hash_link = "[`%s`](%s)" | format(
