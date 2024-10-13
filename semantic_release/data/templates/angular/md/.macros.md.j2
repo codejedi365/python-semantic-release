@@ -1,0 +1,12 @@
+{#
+  MACRO: format the breaking changes description by:
+  - Capitalizing the description
+  - Adding an optional scope prefix
+#}{%  macro format_breaking_changes_description(commit)
+%}{%    set description = commit.breaking_descriptions | join("\n\n") | indent(2) | capitalize | safe | trim
+%}{%    if commit.scope
+%}{%      set description = "**%s**: %s" | format(commit.scope, description)
+%}{%    endif
+%}{{    description
+}}{%  endmacro
+%}

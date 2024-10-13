@@ -1,4 +1,26 @@
-{#
+{% from '.macros.md.j2' import format_breaking_changes_description
+%}{#
+EXAMPLE:
+
+### Features
+
+- feat: Add new feature ([`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
+
+- feat(scope): Add new feature ([`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
+
+### Fixes
+
+- Fix bug (#11) ([`abcdef1`](https://domain.com/namespace/repo/commit/HASH))
+
+### BREAKING CHANGES
+
+- With the change _____, the change causes ___ effect. Ultimately, this section
+  it is a more detailed description of the breaking change. With an optional
+  scope prefix like the commit messages above.
+
+- **scope**: this breaking change has a scope to identify the part of the code that
+  this breaking change applies to for better context.
+
 #}{%  for type_, commits in commit_objects
 %}{{
         "\n### %s\n" | format(type_ | title)
@@ -6,11 +28,26 @@
 }}{%    for commit in commits
 %}{{
           "\n* %s ([`%s`](%s))\n" | format(
-              commit.message.rstrip(),
-              commit.short_hash,
-              commit.hexsha | commit_hash_url,
+            commit.message.rstrip(),
+            commit.short_hash,
+            commit.hexsha | commit_hash_url,
           )
 
 }}{%    endfor
 %}{%  endfor
+%}{#
+
+#}{%  if "breaking" in commit_objects
+%}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
+%}{%    if breaking_commits | length > 0
+%}{{
+          "\n### BREAKING CHANGES\n"
+}}{%
+%}{%      for commit in breaking_commits
+%}{{
+            "\n- %s\n" | format(format_breaking_changes_description(commit))
+
+}}{%      endfor
+%}{%    endif
+%}{%  endif
 %}
