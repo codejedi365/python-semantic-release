@@ -1,4 +1,5 @@
-{% from '.macros.rst.j2' import generate_heading_underline, format_link_reference
+{%   from '.macros.rst.j2' import generate_heading_underline, format_breaking_changes_description
+%}{% from '.macros.rst.j2' import format_link_reference
 %}{#
 
 Features
@@ -10,6 +11,13 @@ Fixes
 -----
 
 * summary (`8a7b8ec`_)
+
+BREAKING CHANGES
+----------------
+
+* With the change _____, the change causes ___ effect. Ultimately, this section
+  it is a more detailed description of the breaking change. With an optional
+  scope prefix like the commit messages above.
 
 .. _8a7B8ec: https://github.com/owner/repo/commit/8a7b8ec
 
@@ -32,5 +40,21 @@ Fixes
 
 }}{%    endfor
 %}{% endfor
+%}{#
+
+#}{% if "breaking" in commit_objects
+%}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
+%}{%    if breaking_commits | length > 0
+%}{{        "\n"
+}}{{        "BREAKING CHANGES\n"
+}}{{        '----------------\n'
+}}{#
+#}{%        for commit in breaking_commits
+%}{{
+                "\n* %s\n" | format(format_breaking_changes_description(commit))
+
+}}{%        endfor
+%}{%    endif
+%}{% endif
 %}
 {{ post_paragraph_links | join("\n") ~ "\n" }}
