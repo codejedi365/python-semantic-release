@@ -1,6 +1,72 @@
-{# MACRO: format a post-paragraph link reference in RST #}
-{%    macro format_link_reference(link, label)
+{#
+  MACRO: format a post-paragraph link reference in RST
+#}{%  macro format_link_reference(link, label)
 %}{{    ".. _%s: %s" | format(label, link)
+}}{%  endmacro
+%}
+
+{#
+  MACRO: format commit summary line
+#}{%  macro format_commit_summary_line(commit)
+%}{{    commit_msg_links(commit)
+}}{%  endmacro
+%}
+
+{#
+  MACRO: Retrieve the PR identifier based on the HVCS type
+#}{%  macro get_pr_identifier()
+%}{#    # Determine the PR identifier based on the HVCS type
+#}{%    if ctx.hvcs_type in ["bitbucket", "gitea", "github"]
+%}{%      set pr_identifier = "#"
+%}{%    elif ctx.hvcs_type == "gitlab"
+%}{%      set pr_identifier = "!"
+%}{%    else
+%}{%      set pr_identifier = ""
+%}{%    endif
+%}{{    pr_identifier | default("", true)
+}}{%  endmacro
+%}
+
+{#
+  MACRO: Create & return an non-inline RST link from a commit message
+  - Returns empty string if no PR/MR identifier is found
+#}{%  macro extract_link_reference(commit)
+%}{%    set summary_line = commit.descriptions[0]
+%}{%    set pr_identifier = get_pr_identifier() | default("", true)
+%}{#
+#}{%    if pr_identifier != "" and summary_line.split("(" ~ pr_identifier) | length > 1
+%}{#      # Create a PR/MR reference url
+#}{%      set pr_num = summary_line.split("(" ~ pr_identifier, maxsplit=1)[1].split(")")[0]
+%}{{      format_link_reference(pr_num | pull_request_url, pr_num)
+}}{%    endif
+%}{%  endmacro
+%}
+
+{#
+  MACRO: formats a commit message for a non-inline RST link for a commit hash and/or PR/MR
+#}{%  macro commit_msg_links(commit)
+%}{%    set commit_hash_link = "`%s`_" | format(
+          commit.short_hash, commit.hexsha | commit_hash_url
+        )
+%}{#
+#}{%    set summary_line = commit.descriptions[0] | capitalize | safe
+%}{%    set pr_identifier = get_pr_identifier() | default("", true)
+%}{#
+#}{%    if pr_identifier != "" and summary_line.split("(" ~ pr_identifier) | length > 1
+%}{#      # Replace PR references with a link to the PR
+#}{%      set pr_num = summary_line.split("(" ~ pr_identifier, maxsplit=1)[1].split(")")[0]
+%}{%      set pr_link = "`%s`_" | format(pr_identifier ~ pr_num)
+%}{%      set replacement = "(%s, %s)" | format(pr_link, commit_hash_link)
+%}{%      set search_text = "(%s)" | format(pr_identifier ~ pr_num)
+%}{%      set summary_line = summary_line | replace(search_text, replacement)
+%}{#
+        # DEFAULT: No PR identifier found, so just append a commit hash as url to the commit summary_line
+#}{%    else
+%}{%      set summary_line = "%s (%s)" | format(summary_line, commit_hash_link)
+%}{%    endif
+%}{#
+        # Return the modified summary_line
+#}{{    summary_line
 }}{%  endmacro
 %}
 
