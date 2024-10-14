@@ -1,7 +1,7 @@
 {%   from '.macros.md.j2' import apply_alphabetical_ordering_by_descriptions
 %}{% from '.macros.md.j2' import apply_alphabetical_ordering_by_brk_descriptions
 %}{% from '.macros.md.j2' import format_breaking_changes_description
-%}{% from '.macros.md.j2' import format_commit_summary_line
+%}{% from '.macros.md.j2' import format_commit_summary_line, section_heading_order
 %}{#
 EXAMPLE:
 
@@ -24,7 +24,7 @@ EXAMPLE:
 - **scope**: this breaking change has a scope to identify the part of the code that
   this breaking change applies to for better context.
 
-#}{%  for type_, commits in commit_objects
+#}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{{
         "\n### %s\n" | format(type_ | title)
 
