@@ -1,24 +1,25 @@
 {%    from 'macros.md.j2' import apply_alphabetical_ordering_by_brk_descriptions
 %}{%  from 'macros.md.j2' import apply_alphabetical_ordering_by_descriptions
 %}{%  from 'macros.md.j2' import apply_alphabetical_ordering_by_release_notices
-%}{%  from 'macros.md.j2' import format_breaking_changes_description, format_commit_summary_line
-%}{%  from 'macros.md.j2' import format_release_notice, section_heading_order
+%}{%  from 'macros.md.j2' import emoji_map, format_breaking_changes_description
+%}{%  from 'macros.md.j2' import format_commit_summary_line, format_release_notice
+%}{%  from 'macros.md.j2' import section_heading_order
 %}{#
 EXAMPLE:
 
-### Features
+### ✨ Features
 
 - Add new feature ([#10](https://domain.com/namespace/repo/pull/10),
   [`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
 
 - **scope**: Add new feature ([`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
 
-### Bug Fixes
+### 🪲 Bug Fixes
 
 - Fix bug ([#11](https://domain.com/namespace/repo/pull/11),
   [`abcdef1`](https://domain.com/namespace/repo/commit/HASH))
 
-### Breaking Changes
+### 💥 Breaking Changes
 
 - With the change _____, the change causes ___ effect. Ultimately, this section
   it is a more detailed description of the breaking change. With an optional
@@ -27,7 +28,7 @@ EXAMPLE:
 - **scope**: this breaking change has a scope to identify the part of the code that
   this breaking change applies to for better context.
 
-### Additional Release Information
+### 📣 Additional Release Information
 
 - This is a release note that provides additional information about the release
   that is not a breaking change or a feature/bug fix.
@@ -55,7 +56,7 @@ EXAMPLE:
    #    # PRINT SECTION (header & commits)
 #}{%    if commit_descriptions | length > 0
 %}{{      "\n"
-}}{{      "### %s\n" | format(type_ | title)
+}}{{      "### %s %s\n" | format(emoji_map[type_], type_ | title)
 }}{{      "\n"
 }}{{      "%s\n" | format(commit_descriptions | unique | join("\n\n"))
 }}{%    endif
@@ -96,7 +97,7 @@ EXAMPLE:
 %}{#
    #    # PRINT BREAKING CHANGE DESCRIPTIONS (header & descriptions)
 #}{{    "\n"
-}}{{    "### Breaking Changes\n"
+}}{{    "### %s Breaking Changes\n" | format(emoji_map["breaking"])
 }}{{
         "\n%s\n" | format(brking_descriptions | unique | join("\n\n"))
 }}{#
@@ -120,7 +121,7 @@ EXAMPLE:
 %}{#
    #    # PRINT RELEASE NOTICE INFORMATION (header & descriptions)
 #}{{    "\n"
-}}{{    "### Additional Release Information\n"
+}}{{    "### %s Additional Release Information\n" | format(emoji_map["info"])
 }}{{
         "\n%s\n" | format(release_notices | unique | join("\n\n"))
 }}{#
