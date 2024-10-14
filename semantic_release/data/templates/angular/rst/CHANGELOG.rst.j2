@@ -9,6 +9,7 @@
 #}{%  set insertion_flag = ctx.changelog_insertion_flag
 %}{%  set unreleased_commits = ctx.history.unreleased | dictsort
 %}{%  set releases = ctx.history.released.values() | list
+%}{%  set hvcs_type = ctx.hvcs_type
 %}{#
 #}{%  if ctx.changelog_mode == "init"
 %}{%    include ".changelog_init.rst.j2"
