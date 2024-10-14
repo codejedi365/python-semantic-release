@@ -1,18 +1,21 @@
+{% set emoji_map = {
+    'breaking': '💥',
+    'feature': '✨',
+    'fix': '🪲',
+    'performance': '⚡',
+    'documentation': '📖',
+    'build system': '⚙️',
+    'refactor': '♻️',
+    'test': '✅',
+    'ci': '🤖',
+    'chore': '🧹',
+    'style': '🎨',
+} %}
+{#
+    'unknown': '❗',
+#}
 
-{% set section_heading_order = [
-    'breaking',
-    'feature',
-    'fix',
-    'performance',
-    'documentation',
-    'build system',
-    'refactor',
-    'test',
-    'ci',
-    'chore',
-    'style',
-  ]
-%}
+{% set section_heading_order = emoji_map.keys() %}
 
 {#
   MACRO: format the breaking changes description by:

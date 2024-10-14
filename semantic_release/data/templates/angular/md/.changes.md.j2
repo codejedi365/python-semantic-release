@@ -1,21 +1,21 @@
 {%   from '.macros.md.j2' import apply_alphabetical_ordering_by_descriptions
 %}{% from '.macros.md.j2' import apply_alphabetical_ordering_by_brk_descriptions
-%}{% from '.macros.md.j2' import format_breaking_changes_description
+%}{% from '.macros.md.j2' import emoji_map, format_breaking_changes_description
 %}{% from '.macros.md.j2' import format_commit_summary_line, section_heading_order
 %}{#
 EXAMPLE:
 
-### Features
+### ✨ Features
 
 - Add new feature ([#10](https://domain.com/namespace/repo/pull/10), [`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
 
 - **scope**: Add new feature ([`abcdef0`](https://domain.com/namespace/repo/commit/HASH))
 
-### Fixes
+### 🪲 Bug Fixes
 
 - Fix bug (#11, [`abcdef1`](https://domain.com/namespace/repo/commit/HASH))
 
-### BREAKING CHANGES
+### 💥 BREAKING CHANGES
 
 - With the change _____, the change causes ___ effect. Ultimately, this section
   it is a more detailed description of the breaking change. With an optional
@@ -26,7 +26,7 @@ EXAMPLE:
 
 #}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{{
-        "\n### %s\n" | format(type_ | title)
+        "\n### %s %s\n" | format(emoji_map[type_], type_ | title)
 
 }}{%    for commit in apply_alphabetical_ordering_by_descriptions(commits)
 %}{#      # Update the first line with reference links and if commit description
@@ -50,7 +50,7 @@ EXAMPLE:
 %}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
 %}{%    if breaking_commits | length > 0
 %}{{
-          "\n### BREAKING CHANGES\n"
+          "\n### %s BREAKING CHANGES\n" | format(emoji_map["breaking"])
 }}{%
 %}{%      for commit in breaking_commits
 %}{{
