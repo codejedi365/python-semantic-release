@@ -1,3 +1,19 @@
+{# TODO: move to configuration for user to modify #}
+{% set section_heading_order = [
+    'breaking',
+    'features',
+    'bug fixes',
+    'performance improvements',
+    'documentation',
+    'build system',
+    'refactoring',
+    'testing',
+    'continuous integration',
+    'chores',
+    'code style',
+  ]
+%}
+
 {#
   MACRO: format a post-paragraph link reference in RST
 #}{%  macro format_link_reference(link, label)

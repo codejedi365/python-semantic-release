@@ -2,6 +2,7 @@
 %}{% from '.macros.rst.j2' import apply_alphabetical_ordering_by_brk_descriptions
 %}{% from '.macros.rst.j2' import extract_link_reference, format_breaking_changes_description
 %}{% from '.macros.rst.j2' import format_commit_summary_line, generate_heading_underline
+%}{% from '.macros.rst.j2' import section_heading_order
 %}{#
 
 Features
@@ -36,14 +37,14 @@ BREAKING CHANGES
 %}{#
 #}{%  set post_paragraph_links = []
 %}{#
-#}{%  for type_, commits in commit_objects if type_ != "unknown"
+#}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{#
 #}{%    set section_header = "%s" | format(type_ | title)
 %}{{    "\n"
 }}{{    section_header ~ "\n"
 }}{{    generate_heading_underline(section_header, '-') ~ "\n"
 }}{#
-#}{%    set ns = namespace(commits=commits)
+#}{%    set ns = namespace(commits=commit_objects[type_])
 %}{{    apply_alphabetical_ordering_by_descriptions(ns) | default("", true)
 }}{#
 #}{%    for commit in ns.commits
@@ -77,15 +78,11 @@ BREAKING CHANGES
 %}{%  endfor
 %}{#
    #  # Determine if there are any breaking change commits by seeing if the type exists
-   #  # commit_objects is a list of tuples [("breaking", [ParsedCommit(), ...]), ("Features", [ParsedCommit(), ...])]
-#}{%  if "breaking" in commit_objects | map(attribute="0") | list
-%}{#    # Filter out breaking change commits that have no breaking descriptions
-        #  1. first filter the list for only tuples of type breaking
-        #  2. Re-map the list to only the list of commits under the breaking category from the list of tuples
-        #  3. Peel off the outer list to get a list of ParsedCommit objects
-        #  4. Filter the list of ParsedCommits to only those with a breaking description
-#}{%    set breaking_commits = commit_objects | selectattr("0", "equalto", "breaking") | map(attribute="1.0")
-%}{%    set breaking_commits = breaking_commits | selectattr("breaking_descriptions.0") | list
+   #  # commit_objects is a dictionary of strings to a list of commits { "breaking", [ParsedCommit(), ...] }
+#}{%  if "breaking" in commit_objects
+%}{#
+   #    # Filter out breaking change commits that have no breaking descriptions
+#}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
 %}{%    if breaking_commits | length > 0
 %}{{      "\n"
 }}{{      "BREAKING CHANGES\n"
