@@ -14,6 +14,23 @@
   ]
 %}
 
+{% set emoji_map = {
+    'breaking': '💥',
+    'features': '✨',
+    'bug fixes': '🪲',
+    'performance improvements': '⚡',
+    'documentation': '📖',
+    'build system': '⚙️',
+    'refactoring': '♻️',
+    'testing': '✅',
+    'continuous integration': '🤖',
+    'chores': '🧹',
+    'code style': '🎨',
+} %}
+{#
+    'unknown': '❗',
+#}
+
 {#
   MACRO: format a post-paragraph link reference in RST
 #}{%  macro format_link_reference(link, label)

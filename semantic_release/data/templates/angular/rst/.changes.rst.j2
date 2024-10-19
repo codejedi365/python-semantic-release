@@ -1,24 +1,24 @@
 {%   from '.macros.rst.j2' import apply_alphabetical_ordering_by_descriptions
 %}{% from '.macros.rst.j2' import apply_alphabetical_ordering_by_brk_descriptions
-%}{% from '.macros.rst.j2' import extract_link_reference, format_breaking_changes_description
-%}{% from '.macros.rst.j2' import format_commit_summary_line, generate_heading_underline
-%}{% from '.macros.rst.j2' import section_heading_order
+%}{% from '.macros.rst.j2' import emoji_map, extract_link_reference,
+%}{% from '.macros.rst.j2' import format_breaking_changes_description, format_commit_summary_line
+%}{% from '.macros.rst.j2' import generate_heading_underline, section_heading_order
 %}{#
 
-Features
---------
+✨ Features
+-----------
 
 * Add new feature (`#10`_, `8a7b8ec`_)
 
 * **scope**: Add another feature (`abcdef0`_)
 
-Fixes
------
+🪲 Bug Fixes
+------------
 
 * Fix bug (`11`_, `8a7b8ec`_)
 
-BREAKING CHANGES
-----------------
+💥 BREAKING CHANGES
+-------------------
 
 * With the change _____, the change causes ___ effect. Ultimately, this section
   it is a more detailed description of the breaking change. With an optional
@@ -39,10 +39,13 @@ BREAKING CHANGES
 %}{#
 #}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{#
-#}{%    set section_header = "%s" | format(type_ | title)
-%}{{    "\n"
+#}{%    set section_header = "%s %s" | format(emoji_map[type_], type_ | title)
+%}{#
+   #    Note: Must add an additional character to the section header when determining the underline because of
+   #    the emoji character which can serve as 2 characters in length.
+#}{{    "\n"
 }}{{    section_header ~ "\n"
-}}{{    generate_heading_underline(section_header, '-') ~ "\n"
+}}{{    generate_heading_underline(section_header ~ " ", '-') ~ "\n"
 }}{#
 #}{%    set ns = namespace(commits=commit_objects[type_])
 %}{{    apply_alphabetical_ordering_by_descriptions(ns) | default("", true)
@@ -85,8 +88,8 @@ BREAKING CHANGES
 #}{%    set breaking_commits = commit_objects["breaking"] | selectattr("breaking_descriptions.0") | list
 %}{%    if breaking_commits | length > 0
 %}{{      "\n"
-}}{{      "BREAKING CHANGES\n"
-}}{{      '----------------\n'
+}}{{      "%s BREAKING CHANGES\n" | format(emoji_map["breaking"])
+}}{{      '-------------------\n'
 }}{#
 #}{%      set brk_ns = namespace(commits=breaking_commits)
 %}{{      apply_alphabetical_ordering_by_brk_descriptions(brk_ns) | default("", true)
