@@ -259,6 +259,9 @@ def generate_release_notes(
     release_notes_env.globals["context"] = {
         "history": history,
     }
+    release_notes_env.globals["ctx"] = {
+        "history": history,
+    }
 
     return render_release_notes(
         release_notes_template_file=release_notes_tpl_file,
