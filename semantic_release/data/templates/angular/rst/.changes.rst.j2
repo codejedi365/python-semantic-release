@@ -1,4 +1,5 @@
-{%   from '.macros.rst.j2' import extract_link_reference, format_breaking_changes_description
+{%   from '.macros.rst.j2' import apply_alphabetical_ordering_by_descriptions
+%}{% from '.macros.rst.j2' import extract_link_reference, format_breaking_changes_description
 %}{% from '.macros.rst.j2' import format_commit_summary_line, generate_heading_underline
 %}{#
 
@@ -34,13 +35,17 @@ BREAKING CHANGES
 %}{#
 #}{%  set post_paragraph_links = []
 %}{#
-#}{%  for type_, commits in commit_objects
-%}{%    set section_header = "%s" | format(type_ | title)
+#}{%  for type_, commits in commit_objects if type_ != "unknown"
+%}{#
+#}{%    set section_header = "%s" | format(type_ | title)
 %}{{    "\n"
 }}{{    section_header ~ "\n"
 }}{{    generate_heading_underline(section_header, '-') ~ "\n"
 }}{#
-#}{%    for commit in commits
+#}{%    set ns = namespace(commits=commits)
+%}{{    apply_alphabetical_ordering_by_descriptions(ns) | default("", true)
+}}{#
+#}{%    for commit in ns.commits
 %}{#      # Extract PR/MR reference if it exists and store it for later
 #}{%      set pr_link_reference = extract_link_reference(commit) | default("", true)
 %}{%      if pr_link_reference != ""
