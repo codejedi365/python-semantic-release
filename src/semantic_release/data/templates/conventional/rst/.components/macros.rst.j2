@@ -13,6 +13,24 @@
   ]
 %}
 
+
+{% set emoji_map = {
+    'breaking': '💥',
+    'bug fixes': '🪲',
+    'build system': '⚙️',
+    'chores': '🧹',
+    'code style': '🎨',
+    'continuous integration': '🤖',
+    'documentation': '📖',
+    'features': '✨',
+    'info': '📣',
+    'performance improvements': '⚡',
+    'refactoring': '♻️',
+    'testing': '✅',
+    'unknown': '❗',
+} %}
+
+
 {#
   MACRO: Capitalize the first letter of a string only
 #}{%  macro capitalize_first_letter_only(sentence)

@@ -1,26 +1,27 @@
 {%   from 'macros.rst.j2' import apply_alphabetical_ordering_by_brk_descriptions
 %}{% from 'macros.rst.j2' import apply_alphabetical_ordering_by_descriptions
 %}{% from 'macros.rst.j2' import apply_alphabetical_ordering_by_release_notices
-%}{% from 'macros.rst.j2' import extract_pr_link_reference, format_breaking_changes_description
+%}{% from 'macros.rst.j2' import emoji_map, extract_pr_link_reference
+%}{% from 'macros.rst.j2' import format_breaking_changes_description
 %}{% from 'macros.rst.j2' import format_commit_summary_line, format_link_reference
 %}{% from 'macros.rst.j2' import format_release_notice, generate_heading_underline
 %}{% from 'macros.rst.j2' import section_heading_order
 %}{#
 
-Features
---------
+✨ Features
+-----------
 
 * Add new feature (`#10`_, `8a7b8ec`_)
 
 * **scope**: Add another feature (`abcdef0`_)
 
-Bug Fixes
----------
+🪲 Bug Fixes
+------------
 
 * Fix bug (`#11`_, `8a7b8ec`_)
 
-Breaking Changes
-----------------
+💥 Breaking Changes
+-------------------
 
 * With the change _____, the change causes ___ effect. Ultimately, this section
   it is a more detailed description of the breaking change. With an optional
@@ -29,8 +30,8 @@ Breaking Changes
 * **scope**: this breaking change has a scope to identify the part of the code that
   this breaking change applies to for better context.
 
-Additional Release Information
-------------------------------
+📣 Additional Release Information
+---------------------------------
 
 * This is a release note that provides additional information about the release
   that is not a breaking change or a feature/bug fix.
@@ -50,7 +51,7 @@ Additional Release Information
 %}{#
 #}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{#    # PREPARE SECTION HEADER
-#}{%    set section_header = "%s" | format(type_ | title)
+#}{%    set section_header = "%s %s" | format(emoji_map[type_], type_ | title)
 %}{#
    #    # PREPROCESS COMMITS
 #}{%    set ns = namespace(commits=commit_objects[type_])
@@ -81,10 +82,12 @@ Additional Release Information
 %}{%    endfor
 %}{#
    #    # PRINT SECTION (Header & Commits)
+   #    # Note: Must add an additional character to the section header when determining
+   #    # the underline because of the emoji character which can serve as 2 characters in length.
 #}{%    if commit_descriptions | length > 0
 %}{{      "\n"
 }}{{      section_header ~ "\n"
-}}{{      generate_heading_underline(section_header, '-')
+}}{{      generate_heading_underline(section_header ~ " ", '-')
 }}{{      "\n"
 }}{{      "\n%s\n" | format(commit_descriptions | unique | join("\n\n"))
 }}{%    endif
@@ -125,8 +128,8 @@ Additional Release Information
 %}{#
    #    # PRINT BREAKING CHANGE DESCRIPTIONS (header & descriptions)
 #}{{    "\n"
-}}{{    "Breaking Changes\n"
-}}{{    '----------------\n'
+}}{{    "%s Breaking Changes\n" | format(emoji_map["breaking"])
+}}{{    '-------------------\n'
 }}{{
         "\n%s\n" | format(brking_descriptions | unique | join("\n\n"))
 }}{#
@@ -150,8 +153,8 @@ Additional Release Information
 %}{#
    #    # PRINT RELEASE NOTICE INFORMATION (header & descriptions)
 #}{{    "\n"
-}}{{    "Additional Release Information\n"
-}}{{    "------------------------------\n"
+}}{{    "%s Additional Release Information\n" | format(emoji_map["info"])
+}}{{    "---------------------------------\n"
 }}{{
         "\n%s\n" | format(release_notices | unique | join("\n\n"))
 }}{#
