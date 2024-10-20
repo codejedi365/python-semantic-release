@@ -18,6 +18,7 @@ class ParsedCommit(NamedTuple):
     descriptions: list[str]
     breaking_descriptions: list[str] = []
     category: str = ""
+    linked_issues: list[str] = []
 
     @property
     def message(self) -> str:
