@@ -182,10 +182,6 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             )
         )
 
-        # TODO: remove in the future
-        if level_bump == LevelBump.MAJOR:
-            parsed_type = "breaking"
-
         logger.debug(
             "commit %s introduces a %s level_bump", commit.hexsha[:8], level_bump
         )
