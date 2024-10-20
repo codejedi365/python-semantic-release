@@ -134,13 +134,14 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             if match
         ]
 
-        level_bump = self.options.tag_to_level.get(
-            parsed_type, self.options.default_bump_level
+        level_bump = (
+            LevelBump.MAJOR
+            # TODO: remove parsed break support as it is not part of the angular commit spec (its part of conventional commits spec)
+            if breaking_descriptions or parsed_break
+            else self.options.tag_to_level.get(
+                parsed_type, self.options.default_bump_level
+            )
         )
-
-        if parsed_break or breaking_descriptions:
-            level_bump = LevelBump.MAJOR
-            parsed_type = "breaking"
 
         logger.debug(
             "commit %s introduces a %s level_bump", commit.hexsha[:8], level_bump
