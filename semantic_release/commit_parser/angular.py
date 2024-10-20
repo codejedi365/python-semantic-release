@@ -196,7 +196,8 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
 
         return ParsedCommit(
             bump=level_bump,
-            type=LONG_TYPE_NAMES.get(parsed_type, parsed_type),
+            type=parsed_type,
+            category=LONG_TYPE_NAMES.get(parsed_type, parsed_type),
             scope=parsed_scope,
             descriptions=descriptions,
             breaking_descriptions=breaking_descriptions,
