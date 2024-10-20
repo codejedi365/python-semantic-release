@@ -20,6 +20,7 @@ class ParsedCommit(NamedTuple):
     linked_issues: tuple[str, ...] = ()
     linked_merge_request: str = ""
     include_in_changelog: bool = True
+    category: str = ""
 
     @property
     def message(self) -> str:
