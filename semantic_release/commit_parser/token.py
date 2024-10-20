@@ -32,6 +32,9 @@ class ParsedCommit(NamedTuple):
     def short_hash(self) -> str:
         return self.commit.hexsha[:7]
 
+    def is_merge_commit(self) -> bool:
+        return bool(len(self.commit.parents) > 1)
+
 
 class ParseError(NamedTuple):
     commit: Commit
