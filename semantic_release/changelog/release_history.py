@@ -147,13 +147,20 @@ class ReleaseHistory:
                     )
                     continue
 
+                # TODO: v10 breaking change
+                changelog_category = (
+                    "unknown"
+                    if isinstance(parsed_result, ParseError)
+                    else parsed_result.category or commit_type
+                )
+
                 if the_version is None:
                     log.info(
                         "[Unreleased] adding '%s' commit(%s) to list",
                         commit_type,
                         commit.hexsha[:8],
                     )
-                    unreleased[commit_type].append(parsed_result)
+                    unreleased[changelog_category].append(parsed_result)
                     continue
 
                 log.info(
@@ -163,7 +170,9 @@ class ReleaseHistory:
                     commit.hexsha[:8],
                 )
 
-                released[the_version]["elements"][commit_type].append(parsed_result)
+                released[the_version]["elements"][changelog_category].append(
+                    parsed_result
+                )
 
         return cls(unreleased=unreleased, released=released)
 

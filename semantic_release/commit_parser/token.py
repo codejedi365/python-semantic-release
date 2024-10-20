@@ -12,11 +12,12 @@ if TYPE_CHECKING:
 
 class ParsedCommit(NamedTuple):
     bump: LevelBump
+    commit: Commit
     type: str
     scope: str
     descriptions: list[str]
-    breaking_descriptions: list[str]
-    commit: Commit
+    breaking_descriptions: list[str] = []
+    category: str = ""
 
     @property
     def message(self) -> str:
