@@ -240,11 +240,9 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
     ) -> dict[str, list[str]]:
         if match := breaking_re.match(text):
             accumulator["breaking_descriptions"].append(match.group(1) or "")
-            # TODO: breaking change v10, removes breaking change footers from descriptions
-            # return accumulator
+            return accumulator
 
-        elif match := self.issue_selector.search(text):
-            # if match := self.issue_selector.search(text):
+        if match := self.issue_selector.search(text):
             predicate = regexp(r",? and | *[,;/& ] *").sub(
                 ",", match.group("issue_predicate") or ""
             )
