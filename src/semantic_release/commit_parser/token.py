@@ -17,6 +17,7 @@ class ParsedCommit(NamedTuple):
     descriptions: list[str]
     breaking_descriptions: list[str]
     commit: Commit
+    linked_issues: tuple[str, ...] = ()
     linked_merge_request: str = ""
     include_in_changelog: bool = True
 
