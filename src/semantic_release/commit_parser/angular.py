@@ -264,11 +264,33 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
         )
 
         # Since we found multiple angular subjects, parse each one individually
-        return [
+        parsed_commits = [
             # parse each of the artificial commits
             self._parse(artificial_commit)
             for artificial_commit in separate_commits
         ]
+
+        lead_commit = parsed_commits[0]
+
+        if isinstance(lead_commit, ParsedCommit) and len(lead_commit.linked_merge_request) > 0:
+            # If the first commit has linked merge requests, assume all commits
+            # are part of the same PR and add the linked merge requests to all
+            # parsed commits
+            def add_linked_merge_request(parsed_result: ParseResult) -> ParseResult:
+                return (
+                    parsed_result
+                    if not isinstance(parsed_result, ParsedCommit)
+                    else ParsedCommit(
+                        **{
+                            **parsed_result._asdict(),
+                            'linked_merge_request': lead_commit.linked_merge_request,
+                        }
+                    )
+                )
+
+            parsed_commits = [lead_commit, *map(add_linked_merge_request, parsed_commits[1:])]
+
+        return parsed_commits
 
     def unsquash_commit(self, commit: Commit) -> list[Commit]:
         # GitHub EXAMPLE:
