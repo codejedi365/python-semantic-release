@@ -40,6 +40,9 @@ class ParsedCommit(NamedTuple):
     bump: LevelBump
     """A LevelBump enum value indicating what type of change this commit introduces."""
 
+    commit: Commit
+    """The original commit object (a class defined by GitPython) that was parsed"""
+
     type: str
     """
     The type of the commit as a string, per the commit message style.
@@ -57,24 +60,21 @@ class ParsedCommit(NamedTuple):
     Commit styles which do not have a meaningful concept of "scope" usually fill this field with an empty string.
     """
 
-    descriptions: list[str]
+    descriptions: tuple[str, ...]
     """
-    A list of paragraphs from the commit message.
+    A read-only sequence of paragraphs from the commit message.
 
     Paragraphs are generally delimited by a double-newline since git commit messages are sometimes manually wordwrapped with
     a single newline, but this is up to the parser to implement.
     """
 
-    breaking_descriptions: list[str]
+    breaking_descriptions: tuple[str, ...] = ()
     """
-    A list of paragraphs which are deemed to identify and describe breaking changes by the parser.
+    A read-only sequence of paragraphs which are deemed to identify and describe breaking changes by the parser.
 
     An example would be a paragraph which begins with the text ``BREAKING CHANGE:`` in the commit message but
-    the parser gennerally strips the prefix and includes the rest of the paragraph in this list.
+    the parser gennerally strips the prefix and includes the rest of the paragraph in this sequence.
     """
-
-    commit: Commit
-    """The original commit object (a class defined by GitPython) that was parsed"""
 
     release_notices: tuple[str, ...] = ()
     """
@@ -153,8 +153,8 @@ class ParsedCommit(NamedTuple):
             # TODO: breaking v10, swap back to type rather than category
             type=parsed_message_result.category,
             scope=parsed_message_result.scope,
-            descriptions=list(parsed_message_result.descriptions),
-            breaking_descriptions=list(parsed_message_result.breaking_descriptions),
+            descriptions=parsed_message_result.descriptions,
+            breaking_descriptions=parsed_message_result.breaking_descriptions,
             commit=commit,
             release_notices=parsed_message_result.release_notices,
             linked_issues=parsed_message_result.linked_issues,
