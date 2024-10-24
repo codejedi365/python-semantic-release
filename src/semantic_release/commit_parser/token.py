@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple, NoReturn, TypeVar, Union
 
+from semantic_release.commit_parser.util import force_str
 from semantic_release.errors import CommitParseError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -38,6 +39,9 @@ class ParsedCommit(NamedTuple):
     bump: LevelBump
     """A LevelBump enum value indicating what type of change this commit introduces."""
 
+    commit: Commit
+    """The original commit object (a class defined by GitPython) that was parsed"""
+
     type: str
     """
     The type of the commit as a string, per the commit message style.
@@ -55,24 +59,21 @@ class ParsedCommit(NamedTuple):
     Commit styles which do not have a meaningful concept of "scope" usually fill this field with an empty string.
     """
 
-    descriptions: list[str]
+    descriptions: tuple[str, ...]
     """
-    A list of paragraphs from the commit message.
+    A read-only sequence of paragraphs from the commit message.
 
     Paragraphs are generally delimited by a double-newline since git commit messages are sometimes manually wordwrapped with
     a single newline, but this is up to the parser to implement.
     """
 
-    breaking_descriptions: list[str]
+    breaking_descriptions: tuple[str, ...] = ()
     """
-    A list of paragraphs which are deemed to identify and describe breaking changes by the parser.
+    A read-only sequence of paragraphs which are deemed to identify and describe breaking changes by the parser.
 
     An example would be a paragraph which begins with the text ``BREAKING CHANGE:`` in the commit message but
-    the parser gennerally strips the prefix and includes the rest of the paragraph in this list.
+    the parser gennerally strips the prefix and includes the rest of the paragraph in this sequence.
     """
-
-    commit: Commit
-    """The original commit object (a class defined by GitPython) that was parsed"""
 
     linked_issues: tuple[str, ...] = ()
     """
@@ -109,9 +110,7 @@ class ParsedCommit(NamedTuple):
 
         If the message is of type ``bytes`` then it will be decoded to a ``UTF-8`` string.
         """
-        m = self.commit.message
-        message_str = m.decode("utf-8") if isinstance(m, bytes) else m
-        return message_str.replace("\r", "")
+        return force_str(self.commit.message).replace("\r", "")
 
     @property
     def hexsha(self) -> str:
@@ -145,8 +144,8 @@ class ParsedCommit(NamedTuple):
             # TODO: breaking v10, swap back to type rather than category
             type=parsed_message_result.category,
             scope=parsed_message_result.scope,
-            descriptions=list(parsed_message_result.descriptions),
-            breaking_descriptions=list(parsed_message_result.breaking_descriptions),
+            descriptions=parsed_message_result.descriptions,
+            breaking_descriptions=parsed_message_result.breaking_descriptions,
             commit=commit,
             linked_issues=parsed_message_result.linked_issues,
             linked_merge_request=parsed_message_result.linked_merge_request,
@@ -173,9 +172,7 @@ class ParseError(NamedTuple):
 
         If the message is of type ``bytes`` then it will be decoded to a ``UTF-8`` string.
         """
-        m = self.commit.message
-        message_str = m.decode("utf-8") if isinstance(m, bytes) else m
-        return message_str.replace("\r", "")
+        return force_str(self.commit.message).replace("\r", "")
 
     @property
     def hexsha(self) -> str:
