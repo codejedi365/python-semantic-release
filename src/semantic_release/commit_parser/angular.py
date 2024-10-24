@@ -102,6 +102,12 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
         self.mr_selector = regexp(
             r"[\t ]\((?:pull request )?(?P<mr_number>[#!]\d+)\)[\t ]*$"
         )
+        self.issue_selector = regexp(
+            str.join("", [
+                r"^(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?):[\t ]+(?P<issue_predicate>.+)[\t ]*$"
+            ]),
+            flags=re.MULTILINE | re.IGNORECASE
+        )
 
     @staticmethod
     def get_default_options() -> AngularParserOptions:
@@ -113,6 +119,13 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
         if match := breaking_re.match(text):
             accumulator["breaking_descriptions"].append(match.group(1) or "")
             # TODO: breaking change v10, removes breaking change footers from descriptions
+            # return accumulator
+
+        elif match := self.issue_selector.search(text):
+        # if match := self.issue_selector.search(text):
+            predicate = regexp(r" *[,;/ ] *").sub(",", match.group("issue_predicate") or "")
+            accumulator["linked_issues"].extend(filter(None, predicate.split(",")))
+            # TODO: breaking change v10, removes resolution footers from descriptions
             # return accumulator
 
         accumulator["descriptions"].append(text)
@@ -156,6 +169,7 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             {
                 "breaking_descriptions": [],
                 "descriptions": [],
+                "linked_issues": [],
             },
         )
 
@@ -183,5 +197,6 @@ class AngularCommitParser(CommitParser[ParseResult, AngularParserOptions]):
             descriptions=body_components["descriptions"],
             breaking_descriptions=body_components["breaking_descriptions"],
             commit=commit,
+            linked_issues=tuple(body_components["linked_issues"]),
             linked_merge_request=linked_merge_request,
         )
