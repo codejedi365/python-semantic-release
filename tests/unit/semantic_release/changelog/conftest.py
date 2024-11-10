@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING
+from unittest import mock
 
 import pytest
-from git import Commit, Object, Repo
+from git import Commit, Object, Repo, SymbolicReference, TagReference
 
 from semantic_release.changelog.release_history import Release, ReleaseHistory
 from semantic_release.commit_parser.token import ParsedCommit
@@ -58,6 +59,32 @@ def artificial_release_history(commit_author: Actor) -> ReleaseHistory:
         commit=feat_commit,
     )
 
+    first_version_tag = TagReference(
+        repo=Repo("."),
+        path=f"refs/tags/v{first_version}",
+    )
+
+    # Prevent actual writing to filesystem
+    with mock.patch.object(
+        SymbolicReference,
+        SymbolicReference.set_reference.__name__,
+        return_value=first_version_tag,
+    ):
+        first_version_tag.set_commit(fix_commit)
+
+    second_version_tag = TagReference(
+        repo=Repo("."),
+        path=f"refs/tags/v{second_version}",
+    )
+
+    # Prevent actual writing to filesystem
+    with mock.patch.object(
+        SymbolicReference,
+        SymbolicReference.set_reference.__name__,
+        return_value=second_version_tag,
+    ):
+        second_version_tag.set_commit(feat_commit)
+
     return ReleaseHistory(
         unreleased=defaultdict(
             list,
@@ -81,6 +108,7 @@ def artificial_release_history(commit_author: Actor) -> ReleaseHistory:
                     ],
                 ),
                 version=second_version,
+                tag=second_version_tag,
             ),
             first_version: Release(
                 tagger=commit_author,
@@ -96,6 +124,7 @@ def artificial_release_history(commit_author: Actor) -> ReleaseHistory:
                     ],
                 ),
                 version=first_version,
+                tag=first_version_tag,
             ),
         },
     )

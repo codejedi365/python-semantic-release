@@ -44,9 +44,11 @@ def test_default_changelog_template(
     latest_release = artificial_release_history.released[latest_version]
 
     first_version = list(artificial_release_history.released.keys())[-1]
+    first_release = artificial_release_history.released[first_version]
 
     feat_commit_obj = latest_release["elements"]["feature"][0]
     fix_commit_obj = latest_release["elements"]["fix"][0]
+    tag_obj = first_release["tag"]
     assert isinstance(feat_commit_obj, ParsedCommit)
     assert isinstance(fix_commit_obj, ParsedCommit)
 
@@ -55,6 +57,8 @@ def test_default_changelog_template(
 
     fix_commit_url = hvcs.commit_hash_url(fix_commit_obj.commit.hexsha)
     fix_description = str.join("\n", fix_commit_obj.descriptions)
+
+    tag_url = hvcs.commit_hash_url(tag_obj.object.hexsha)
 
     expected_changelog = str.join(
         "\n",
@@ -79,7 +83,9 @@ def test_default_changelog_template(
             "",
             f"## v{first_version} ({TODAY_DATE_STR})",
             "",
+            # Due to the 100 character limit, hash url will be on the second line
             "- Initial Release",
+            f"  ([`{tag_obj.object.hexsha[:7]}`]({tag_url}))",
         ],
     )
 
@@ -185,9 +191,11 @@ def test_default_changelog_template_w_unreleased_changes(
     latest_release = artificial_release_history.released[latest_version]
 
     first_version = list(artificial_release_history.released.keys())[-1]
+    first_release = artificial_release_history.released[first_version]
 
     feat_commit_obj = latest_release["elements"]["feature"][0]
     fix_commit_obj = latest_release["elements"]["fix"][0]
+    tag_obj = first_release["tag"]
     assert isinstance(feat_commit_obj, ParsedCommit)
     assert isinstance(fix_commit_obj, ParsedCommit)
 
@@ -196,6 +204,8 @@ def test_default_changelog_template_w_unreleased_changes(
 
     fix_commit_url = hvcs.commit_hash_url(fix_commit_obj.commit.hexsha)
     fix_description = str.join("\n", fix_commit_obj.descriptions)
+
+    tag_url = hvcs.commit_hash_url(tag_obj.object.hexsha)
 
     expected_changelog = str.join(
         "\n",
@@ -222,13 +232,15 @@ def test_default_changelog_template_w_unreleased_changes(
             "### Fix",
             "",
             # Due to the 100 character limit, hash url will be on the second line
-            f"- **{feat_commit_obj.scope}**: {fix_description[0].capitalize()}{fix_description[1:]}",
+            f"- **{fix_commit_obj.scope}**: {fix_description[0].capitalize()}{fix_description[1:]}",
             f"  ([`{fix_commit_obj.commit.hexsha[:7]}`]({fix_commit_url}))",
             "",
             "",
             f"## v{first_version} ({TODAY_DATE_STR})",
             "",
+            # Due to the 100 character limit, hash url will be on the second line
             "- Initial Release",
+            f"  ([`{tag_obj.object.hexsha[:7]}`]({tag_url}))",
         ],
     )
 

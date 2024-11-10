@@ -113,13 +113,16 @@ def test_default_release_notes_template_first_release_masked(
     hvcs = hvcs_client(example_git_https_url)
     version = list(single_release_history.released.keys())[-1]
     release = single_release_history.released[version]
+    tag_obj = release["tag"]
+    tag_short_sha = tag_obj.object.hexsha[:7]
+    tag_url = hvcs.commit_hash_url(tag_obj.object.hexsha)
 
     expected_content = str.join(
         os.linesep,
         [
             f"## v{version} ({TODAY_DATE_STR})",
             "",
-            "- Initial Release",
+            f"- Initial Release ([`{tag_short_sha}`]({tag_url}))",
             "",
         ],
     )
