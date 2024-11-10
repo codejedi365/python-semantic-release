@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from re import Pattern
     from typing import Iterable, Iterator
 
+    from git.refs.tag import Tag
     from git.repo.base import Repo
     from git.util import Actor
 
@@ -97,6 +98,7 @@ class ReleaseHistory:
                     tagged_date=tagged_date,
                     elements=defaultdict(list),
                     version=the_version,
+                    tag=tag,
                 )
 
                 released.setdefault(the_version, release)
@@ -175,7 +177,12 @@ class ReleaseHistory:
         yield self.released
 
     def release(
-        self, version: Version, tagger: Actor, committer: Actor, tagged_date: datetime
+        self,
+        version: Version,
+        tagger: Actor,
+        committer: Actor,
+        tagged_date: datetime,
+        tag: Tag,
     ) -> ReleaseHistory:
         if version in self.released:
             raise ValueError(f"{version} has already been released!")
@@ -191,6 +198,7 @@ class ReleaseHistory:
                     "tagged_date": tagged_date,
                     "elements": self.unreleased,
                     "version": version,
+                    "tag": tag,
                 },
                 **self.released,
             },
@@ -210,3 +218,4 @@ class Release(TypedDict):
     tagged_date: datetime
     elements: dict[str, list[ParseResult]]
     version: Version
+    tag: Tag | TagObject
