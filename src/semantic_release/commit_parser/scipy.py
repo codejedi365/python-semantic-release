@@ -132,20 +132,6 @@ class ScipyParserOptions(ParserOptions):
     )
     """Commit-type prefixes that are allowed but do not result in a version bump."""
 
-    allowed_tags: Tuple[str, ...] = (
-        *major_tags,
-        *minor_tags,
-        *patch_tags,
-        *other_allowed_tags,
-    )
-    """
-    All commit-type prefixes that are allowed.
-
-    These are used to identify a valid commit message. If a commit message does not start with
-    one of these prefixes, it will not be considered a valid commit message.
-    """
-
-    # TODO: breaking v11, make consistent with AngularParserOptions
     default_level_bump: LevelBump = LevelBump.NO_RELEASE
     """The minimum bump level to apply to valid commit message."""
 
@@ -160,6 +146,18 @@ class ScipyParserOptions(ParserOptions):
         """A mapping of commit tags to the level bump they should result in."""
         return self._tag_to_level
 
+    @property
+    def allowed_tags(self) -> tuple[str, ...]:
+        """
+        All commit-type prefixes that are allowed.
+
+        These are used to identify a valid commit message. If a commit message does not start with
+        one of these prefixes, it will not be considered a valid commit message.
+
+        :return: A tuple of all allowed commit-type prefixes (ordered from most to least significant)
+        """
+        return tuple(list(self.tag_to_level.keys())[::-1])
+
     def __post_init__(self) -> None:
         # TODO: breaking v11, remove as the name is now consistent
         self.default_bump_level = self.default_level_bump
@@ -170,7 +168,9 @@ class ScipyParserOptions(ParserOptions):
                 # for our expected output. Due to the empty second array, we know the first is always longest
                 # and that means no values in the first entry of the tuples will ever be a LevelBump. We
                 # apply a str() to make mypy happy although it will never happen.
-                *zip_longest(self.allowed_tags, (), fillvalue=self.default_bump_level),
+                *zip_longest(
+                    self.other_allowed_tags, (), fillvalue=self.default_bump_level
+                ),
                 *zip_longest(self.patch_tags, (), fillvalue=LevelBump.PATCH),
                 *zip_longest(self.minor_tags, (), fillvalue=LevelBump.MINOR),
                 *zip_longest(self.major_tags, (), fillvalue=LevelBump.MAJOR),
