@@ -60,6 +60,7 @@ docs = [
   "sphinxcontrib-apidoc == 0.6.0",
   "sphinx-autobuild == 2024.2.4",
   "furo ~= 2025.9",
+  "google-cloud-bigquery ~= 3.27",
 ]
 test = [
   "coverage[toml] ~= 7.0",
