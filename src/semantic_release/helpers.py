@@ -1,13 +1,30 @@
+from __future__ import annotations
+
 import importlib
 import logging
 import re
 import string
 from functools import lru_cache, wraps
 from pathlib import PurePosixPath
-from typing import Any, Callable, NamedTuple, TypeVar
+from re import compile as regexp
+from typing import Any, Callable, NamedTuple, TypeVar, TYPE_CHECKING
 from urllib.parse import urlsplit
 
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Iterable
+
+
 log = logging.getLogger(__name__)
+
+number_pattern = regexp(r"(\d+)")
+
+
+def sort_numerically(iterable: Iterable[str], reverse: bool = False) -> list[str]:
+    return sorted(
+        iterable,
+        key=lambda x: int((number_pattern.search(x) or [-1])[0]),
+        reverse=reverse,
+    )
 
 
 def format_arg(value: Any) -> str:
