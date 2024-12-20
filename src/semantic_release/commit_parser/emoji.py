@@ -176,7 +176,7 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
             flags=re.MULTILINE | re.IGNORECASE,
         )
 
-        self.notice_selector = regexp(r'^NOTICE: (?P<notice>.+)$')
+        self.notice_selector = regexp(r"^NOTICE: (?P<notice>.+)$")
 
         self.filters = {
             "typo-extra-spaces": (regexp(r"(\S)  +(\S)"), r"\1 \2"),
@@ -222,7 +222,9 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
     def commit_body_components_separator(
         self, accumulator: dict[str, list[str]], text: str
     ) -> dict[str, list[str]]:
-        if (match := self.notice_selector.match(text)) and (notice := match.group("notice")):
+        if (match := self.notice_selector.match(text)) and (
+            notice := match.group("notice")
+        ):
             accumulator["notices"].append(notice)
             # TODO: breaking change v10, removes notice footers from descriptions
             # return accumulator
@@ -243,11 +245,12 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
                     predicate.split(","),
                 )
             )
-            accumulator["linked_issues"] = sort_numerically(
-                set(accumulator["linked_issues"]).union(new_issue_refs)
-            )
-            # TODO: breaking change v10, removes resolution footers from descriptions
-            # return accumulator
+            if new_issue_refs:
+                accumulator["linked_issues"] = sort_numerically(
+                    set(accumulator["linked_issues"]).union(new_issue_refs)
+                )
+                # TODO: breaking change v10, removes resolution footers from descriptions
+                # return accumulator
 
         # Prevent appending duplicate descriptions
         if text not in accumulator["descriptions"]:
@@ -440,10 +443,6 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
 
             current_msg = clean_paragraph
 
-        # Store the last commit message (if its not empty)
-        if current_msg:
-            separate_commit_msgs.append(current_msg)
-
         # Return a list of artificial commits (each with a single commit message)
         return [
             # create a artificial commit object (copy of original but with modified message)
@@ -453,5 +452,5 @@ class EmojiCommitParser(CommitParser[ParseResult, EmojiParserOptions]):
                     "message": commit_msg,
                 }
             )
-            for commit_msg in separate_commit_msgs
+            for commit_msg in filter(None, [separate_commit_msgs, current_msg])
         ] or [commit]
