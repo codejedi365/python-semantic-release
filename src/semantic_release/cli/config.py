@@ -22,6 +22,7 @@ from pydantic import (
 )
 
 # typing_extensions is for Python 3.8, 3.9, 3.10 compatibility
+import tomlkit
 from typing_extensions import Annotated, Self
 from urllib3.util.url import parse_url
 
@@ -503,6 +504,7 @@ def _recursive_getattr(obj: Any, path: str) -> Any:
 class RuntimeContext:
     _mask_attrs_: ClassVar[List[str]] = ["hvcs_client.token"]
 
+    project_metadata: dict[str, Any]
     repo_dir: Path
     commit_parser: CommitParser[ParseResult, ParserOptions]
     version_translator: VersionTranslator
@@ -578,6 +580,21 @@ class RuntimeContext:
         ##
         # credentials masking for logging
         masker = MaskingFilter(_use_named_masks=raw.logging_use_named_masks)
+
+        # TODO: move to config if we change how the generated config is constructed
+        # Retrieve project metadata from pyproject.toml
+        project_metadata = {}
+        curr_dir = Path.cwd().resolve()
+        allowed_directories = [
+            dir_path
+            for dir_path in [curr_dir, *curr_dir.parents]
+            if str(raw.repo_dir) in str(dir_path)
+        ]
+        for allowed_dir in allowed_directories:
+            if (proj_toml := allowed_dir.joinpath("pyproject.toml")).exists():
+                config_toml = tomlkit.parse(proj_toml.read_text())
+                project_metadata = config_toml.unwrap().get("project", project_metadata)
+                break
 
         # Retrieve details from repository
         with Repo(str(raw.repo_dir)) as git_repo:
@@ -791,6 +808,7 @@ class RuntimeContext:
         # )
 
         self = cls(
+            project_metadata=project_metadata,
             repo_dir=raw.repo_dir,
             commit_parser=commit_parser,
             version_translator=version_translator,
