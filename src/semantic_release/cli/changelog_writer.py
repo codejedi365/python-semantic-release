@@ -228,6 +228,7 @@ def generate_release_notes(
     history: ReleaseHistory,
     style: str,
     mask_initial_release: bool,
+    license_name: str = "",
 ) -> str:
     users_tpl_file = template_dir / DEFAULT_RELEASE_NOTES_TPL_FILE
 
@@ -254,7 +255,11 @@ def generate_release_notes(
         version=release["version"],
         release=release,
         mask_initial_release=mask_initial_release,
-        filters=(*hvcs_client.get_changelog_context_filters(), autofit_text_width),
+        license_name=license_name,
+        filters=(
+            *hvcs_client.get_changelog_context_filters(),
+            autofit_text_width,
+        ),
     ).bind_to_environment(
         # Use a new, non-configurable environment for release notes -
         # not user-configurable at the moment
