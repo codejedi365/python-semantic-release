@@ -266,10 +266,16 @@ changelog.
 At this time, the default template for version release notes is only available
 in Markdown format for all VCS types.
 
+As of ``v9.16.0``, the default release notes will also include a statement to
+declare which license the project was released under. PSR determines which license
+to declare based on the value of ``project.license`` in the ``pyproject.toml``
+file as defined in the `PEP 621`_ specification.
+
 .. seealso::
     - To personalize your release notes, see the
       :ref:`changelog-templates-custom_release_notes` section.
 
+.. _PEP 621: https://peps.python.org/pep-0621/
 
 .. _changelog-templates-template-rendering:
 
