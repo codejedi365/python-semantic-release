@@ -52,7 +52,7 @@
 #}{%  for type_ in section_heading_order if type_ in commit_objects
 %}{#    # PREPARE SECTION HEADER
 #}{%    set section_header = "%s %s" | format(
-          emoji_map[type_], type_ | title
+          emoji_map[type_], section_heading_translations[type_]
         )
 %}{#
    #    # PREPROCESS COMMITS
