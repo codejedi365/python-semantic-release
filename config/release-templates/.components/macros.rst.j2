@@ -1,32 +1,32 @@
 {# TODO: move to configuration for user to modify #}
 {% set section_heading_translations = {
-    'feat': 'features',
-    'fix': 'bug fixes',
-    'perf': 'performance improvements',
-    'docs': 'documentation',
-    'build': 'build system',
-    'refactor': 'refactoring',
-    'test': 'testing',
-    'ci': 'continuous integration',
-    'chore': 'chores',
-    'style': 'code style',
+    'feat': 'Features',
+    'fix': 'Bug Fixes',
+    'perf': 'Performance Improvements',
+    'docs': 'Documentation',
+    'build': 'Build System',
+    'refactor': 'Refactoring',
+    'test': 'Testing',
+    'ci': 'Continuous Integration',
+    'chore': 'Chores',
+    'style': 'Code Style',
   }
 %}
 
-{% set section_heading_order = section_heading_translations.values() %}
+{% set section_heading_order = section_heading_translations.keys() %}
 
 {% set emoji_map = {
     'breaking': '💥',
-    'features': '✨',
-    'bug fixes': '🪲',
-    'performance improvements': '⚡',
-    'documentation': '📖',
-    'build system': '⚙️',
-    'refactoring': '♻️',
-    'testing': '✅',
-    'continuous integration': '🤖',
-    'chores': '🧹',
-    'code style': '🎨',
+    'feat': '✨',
+    'fix': '🪲',
+    'perf': '⚡',
+    'docs': '📖',
+    'build': '⚙️',
+    'refactor': '♻️',
+    'test': '✅',
+    'ci': '🤖',
+    'chore': '🧹',
+    'style': '🎨',
     'unknown': '❗',
     'release_note': '💡',
 } %}
