@@ -55,7 +55,7 @@ EXAMPLE:
 %}{#
    #    # PRINT SECTION (header & commits)
 #}{{    "\n"
-}}{{    "### %s %s\n" | format(emoji_map[type_], type_ | title)
+}}{{    "### %s %s\n" | format(emoji_map[type_], section_heading_translations[type_])
 }}{{    "\n"
 }}{{    "%s\n" | format(commit_descriptions | unique | join("\n\n"))
 }}{%  endfor
