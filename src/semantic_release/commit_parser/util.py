@@ -45,8 +45,8 @@ spread_out_git_footers: RegexReplaceDef = {
     # Match a git footer line, and add an extra newline after it
     # only be flexible enough for a double space indent (otherwise its probably on purpose)
     #   - found collision with dependabot's yaml in a commit message with a git footer (its unusal but possible)
-    "pattern": regexp(r"^ {0,2}([\w-]*: .+)$\n?(?!\n)", MULTILINE),
-    "repl": r"\1\n\n",
+    "pattern": regexp(r"^ {0,2}([\w-]*: .+)$\n?((?!\n) *[^:\n]+:)", MULTILINE),
+    "repl": r"\1\n\n\2",
 }
 
 
