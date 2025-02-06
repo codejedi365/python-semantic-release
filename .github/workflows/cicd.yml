@@ -113,6 +113,10 @@ jobs:
           name: ${{ needs.validate.outputs.distribution-artifacts }}
           path: dist
 
+      - name: test | file list
+        run: |
+          find .git -type f -exec ls -lA {} \;
+
       - name: Evaluate | Determine Next Version
         id: version
         uses: ./
@@ -164,6 +168,11 @@ jobs:
           MAJOR_VERSION_TAG="$(echo "$FULL_VERSION_TAG" | cut -d. -f1)"
           git tag --force --annotate "$MAJOR_VERSION_TAG" "${FULL_VERSION_TAG}^{}" -m "$MAJOR_VERSION_TAG"
           git push -u origin "$MAJOR_VERSION_TAG" --force
+
+      - name: test | file list
+        if: always()
+        run: |
+          find .git -type f -exec ls -lA {} \;
 
     outputs:
       released: ${{ steps.release.outputs.released }}
