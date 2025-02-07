@@ -4,6 +4,22 @@
 CHANGELOG
 =========
 
+.. _changelog-v9.18.1-alpha.1:
+
+v9.18.1-alpha.1 (2025-02-06)
+============================
+
+🪲 Bug Fixes
+------------
+
+* **config**: Refactors default token resolution to prevent pre-mature insecure URL error, closes
+  `#1074`_, `#1169`_ (`2131749`_)
+
+.. _#1074: https://github.com/codejedi365/python-semantic-release/issues/1074
+.. _#1169: https://github.com/codejedi365/python-semantic-release/issues/1169
+.. _2131749: https://github.com/codejedi365/python-semantic-release/commit/2131749d31bf255f6383c767d7927a85a62a3aab
+
+
 .. _changelog-v9.18.0:
 
 v9.18.0 (2025-02-06)
