@@ -8,6 +8,11 @@ on:
       - release/**
 
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+
 # default token permissions = none
 permissions: {}
 
@@ -81,7 +86,6 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    concurrency: push
     needs: validate
     if: ${{ needs.validate.outputs.new-release-detected == 'true' }}
 
