@@ -574,6 +574,36 @@ class RuntimeContext:
     # can accept the filter as an argument and call
     masker: MaskingFilter
 
+    # @field_validator("build_command_env", mode="before")
+    # @classmethod
+    # def load_build_env_vars(cls, val: Any) -> dict[str, str]:
+    #     if val is None:
+    #         return {}
+
+    #     if isinstance(val, dict):
+    #         return {
+    #             str(k): str(v)
+    #             for (k, v) in val.items()
+    #         }
+
+    #     if not isinstance(val, (list, tuple, str)):
+    #         raise ValueError("Expected a string or list of strings")
+
+    #     env_def = [val] if isinstance(val, str) else val
+    #     resolved_env_vars = {}
+    #     for env_var_def in env_def:
+    #         name, env_val = env_var_def.split("=", 1)
+    #         if not name:
+    #             continue
+    #         if not env_val and "=" not in env_var_def:
+    #             # avoid the edge case that user wants to define a value as empty
+    #             # and don't autoresolve it
+    #             env_val = os.getenv(name, None)
+
+    #         resolved_env_vars[name] = env_val or ""
+
+    #     return resolved_env_vars
+
     @staticmethod
     def resolve_from_env(param: Optional[MaybeFromEnv]) -> Optional[str]:
         if isinstance(param, EnvConfigVar):
