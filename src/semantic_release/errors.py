@@ -63,6 +63,12 @@ class UnexpectedResponse(SemanticReleaseBaseError):
     """
 
 
+class CreateReleaseError(SemanticReleaseBaseError):
+    """
+    Raised when there is a failure creating a release on a remote hvcs.
+    """
+
+
 class IncompleteReleaseError(SemanticReleaseBaseError):
     """
     Raised when there is a failure amongst one of the api requests when creating a

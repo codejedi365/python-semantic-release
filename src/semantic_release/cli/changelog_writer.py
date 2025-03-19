@@ -26,6 +26,7 @@ from semantic_release.cli.util import noop_report
 from semantic_release.errors import InternalError
 from semantic_release.globals import logger
 from semantic_release.helpers import sort_numerically
+from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
 
 if TYPE_CHECKING:  # pragma: no cover
     from jinja2 import Environment
@@ -33,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from semantic_release.changelog.context import ChangelogContext
     from semantic_release.changelog.release_history import Release, ReleaseHistory
     from semantic_release.cli.config import RuntimeContext
-    from semantic_release.hvcs._base import HvcsBase
+    from semantic_release.hvcs.i_rvcs import RvcsInterface
 
 
 def get_default_tpl_dir(style: str, sub_dir: str | None = None) -> Path:
@@ -156,6 +157,7 @@ def write_default_changelog(
         changelog_context=changelog_context,
         changelog_style=changelog_style,
     )
+
     # write_text() will automatically normalize newlines to the OS, so we just use an universal newline here
     changelog_file.write_text(f"{changelog_text}\n", encoding="utf-8")
 
@@ -165,14 +167,18 @@ def write_default_changelog(
 def write_changelog_files(
     runtime_ctx: RuntimeContext,
     release_history: ReleaseHistory,
-    hvcs_client: HvcsBase,
+    hvcs_client: RvcsInterface,
     noop: bool = False,
 ) -> list[str]:
     project_dir = Path(runtime_ctx.repo_dir)
     template_dir = runtime_ctx.template_dir
 
     changelog_context = make_changelog_context(
-        hvcs_client=hvcs_client,
+        repo_name=hvcs_client.get_repo_name(),
+        repo_namespace=hvcs_client.get_owner_namespace(),
+        hvcs_client=hvcs_client
+        if isinstance(hvcs_client, HvcsChangelogClientInterface)
+        else None,
         release_history=release_history,
         mode=runtime_ctx.changelog_mode,
         insertion_flag=runtime_ctx.changelog_insertion_flag,
@@ -223,7 +229,7 @@ def write_changelog_files(
 
 
 def generate_release_notes(
-    hvcs_client: HvcsBase,
+    hvcs_client: RvcsInterface,
     release: Release,
     template_dir: Path,
     history: ReleaseHistory,
@@ -250,15 +256,19 @@ def generate_release_notes(
     )
 
     release_notes_env = ReleaseNotesContext(
-        repo_name=hvcs_client.repo_name,
-        repo_owner=hvcs_client.owner,
+        repo_name=hvcs_client.get_repo_name(),
+        repo_owner=hvcs_client.get_owner_namespace(),
         hvcs_type=hvcs_client.__class__.__name__.lower(),
         version=release["version"],
         release=release,
         mask_initial_release=mask_initial_release,
         license_name=license_name,
         filters=(
-            *hvcs_client.get_changelog_context_filters(),
+            *(
+                hvcs_client.get_changelog_context_filters()
+                if isinstance(hvcs_client, HvcsChangelogClientInterface)
+                else ()
+            ),
             create_pypi_url,
             autofit_text_width,
             sort_numerically,
