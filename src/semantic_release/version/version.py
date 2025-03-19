@@ -215,7 +215,7 @@ class Version:
         Note this will intentionally drop the build metadata - that should be added
         elsewhere for the specific build producing this version.
         """
-        if type(level) != LevelBump:
+        if not isinstance(level, LevelBump):
             raise TypeError(f"Unexpected level {level!r}: expected {LevelBump!r}")
 
         log.debug("performing a %s level bump", level)
