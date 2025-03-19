@@ -34,7 +34,7 @@ from semantic_release.errors import (
 from semantic_release.gitproject import GitProject
 from semantic_release.globals import logger
 from semantic_release.hvcs.github import Github
-from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
 from semantic_release.version.algorithm import (
     next_version,
     tags_and_versions,
@@ -722,7 +722,7 @@ def version(  # noqa: C901
             gha_output.commit_sha = git_repo.head.commit.hexsha
 
     if push_changes:
-        remote_url = runtime.hvcs_client.remote_url(
+        remote_url = hvcs_client.remote_url(
             use_token=not runtime.ignore_token_for_push
         )
 
@@ -751,7 +751,7 @@ def version(  # noqa: C901
     if not make_vcs_release:
         return
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
+    if not isinstance(hvcs_client, ReleaseSupportInterface):
         logger.info("Remote does not support releases. Skipping release creation...")
         return
 

@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from semantic_release.commit_parser import CommitParser
     from semantic_release.commit_parser._base import ParserOptions
     from semantic_release.commit_parser.token import ParseResult
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
     from semantic_release.version.version import Version
 
     from tests.conftest import (
@@ -82,7 +82,7 @@ if TYPE_CHECKING:
     class UseHvcsFn(Protocol):
         def __call__(
             self, domain: str | None = None, toml_file: Path | str = ...
-        ) -> type[HvcsBase]: ...
+        ) -> type[RvcsInterface]: ...
 
     class UseParserFn(Protocol):
         def __call__(
@@ -731,7 +731,7 @@ def use_github_hvcs(
 
     def _use_github_hvcs(
         domain: str | None = None, toml_file: Path | str = pyproject_toml_file
-    ) -> type[HvcsBase]:
+    ) -> type[RvcsInterface]:
         update_pyproject_toml(
             pyproject_toml_config_option_remote_type,
             Github.__name__.lower(),
@@ -759,7 +759,7 @@ def use_gitlab_hvcs(
 
     def _use_gitlab_hvcs(
         domain: str | None = None, toml_file: Path | str = pyproject_toml_file
-    ) -> type[HvcsBase]:
+    ) -> type[RvcsInterface]:
         update_pyproject_toml(
             pyproject_toml_config_option_remote_type,
             Gitlab.__name__.lower(),
@@ -787,7 +787,7 @@ def use_gitea_hvcs(
 
     def _use_gitea_hvcs(
         domain: str | None = None, toml_file: Path | str = pyproject_toml_file
-    ) -> type[HvcsBase]:
+    ) -> type[RvcsInterface]:
         update_pyproject_toml(
             pyproject_toml_config_option_remote_type,
             Gitea.__name__.lower(),
@@ -815,7 +815,7 @@ def use_bitbucket_hvcs(
 
     def _use_bitbucket_hvcs(
         domain: str | None = None, toml_file: Path | str = pyproject_toml_file
-    ) -> type[HvcsBase]:
+    ) -> type[RvcsInterface]:
         update_pyproject_toml(
             pyproject_toml_config_option_remote_type,
             Bitbucket.__name__.lower(),
