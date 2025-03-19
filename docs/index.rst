@@ -66,9 +66,8 @@ Documentation Contents
    troubleshooting
    contributing
    contributors
-   Migrating from Python Semantic Release v7 <migrating_from_v7>
+   upgrading/index
    Internal API <api/modules>
-   Algorithm <algorithm>
    Changelog <psr_changelog>
    View on GitHub <https://github.com/python-semantic-release/python-semantic-release>
 

@@ -1,9 +1,9 @@
-.. _migrating-from-v7:
+.. _upgrade_v8:
 
-Migrating from Python Semantic Release v7
-=========================================
+Upgrading to v8
+===============
 
-Python Semantic Release 8.0.0 introduced a number of breaking changes.
+Python Semantic Release v8.0.0 introduced a number of breaking changes.
 The internals have been changed significantly to better support highly-requested
 features and to streamline the maintenance of the project.
 
