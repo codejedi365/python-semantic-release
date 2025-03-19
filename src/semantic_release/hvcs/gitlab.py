@@ -22,9 +22,11 @@ from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
 from semantic_release.hvcs.util import suppress_not_found
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal
 
     from gitlab.v4.objects import Project as GitLabProject
+
+    TokenType = Literal["PAT", "OAUTH", "CI_JOB"]
 
 
 class Gitlab(RemoteHvcsBase):
@@ -44,12 +46,14 @@ class Gitlab(RemoteHvcsBase):
         hvcs_domain: str | None = None,
         token: str | None = None,
         allow_insecure: bool = False,
+        token_type: TokenType = "PAT",
         **_kwargs: Any,
     ) -> None:
         super().__init__(remote_url)
         self.token = token
         self.project_namespace = f"{self.owner}/{self.repo_name}"
         self._project: GitLabProject | None = None
+        self._is_ci_job_token = bool(token_type == "CI_JOB")
 
         domain_url = self._normalize_url(
             hvcs_domain
@@ -68,13 +72,25 @@ class Gitlab(RemoteHvcsBase):
             ).url.rstrip("/")
         )
 
-        self._client = gitlab.Gitlab(self.hvcs_domain.url, private_token=self.token)
+        self._client = gitlab.Gitlab(
+            url = self.hvcs_domain.url,
+            private_token = self.token if token_type == "PAT" else None,
+            oauth_token = self.token if token_type == "OAUTH" else None,
+            job_token = self.token if token_type == "CI_JOB" else None,
+        )
         self._api_url = parse_url(self._client.api_url)
 
     @property
     def project(self) -> GitLabProject:
         if self._project is None:
-            self._project = self._client.projects.get(self.project_namespace)
+            self._project = self._client.projects.get(
+                self.project_namespace,
+                lazy=self._is_ci_job_token,
+                # CI_JOB_TOKEN does not have access to the projects/ api endpoint,
+                # so it cannot be searched/validated. Use lazy to prevent loading of
+                # full representative object, with this though, the project object is
+                # not populated with current project data (releases, tags, issues, etc)
+            )
         return self._project
 
     @lru_cache(maxsize=1)
