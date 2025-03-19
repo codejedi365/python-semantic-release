@@ -80,7 +80,7 @@ _known_commit_parsers: Dict[str, type[CommitParser]] = {
 }
 
 
-_known_hvcs: Dict[HvcsClient, Type[hvcs.HvcsBase]] = {
+_known_hvcs: Dict[HvcsClient, Type[hvcs.RvcsInterface]] = {
     HvcsClient.BITBUCKET: hvcs.Bitbucket,
     HvcsClient.GITHUB: hvcs.Github,
     HvcsClient.GITLAB: hvcs.Gitlab,
@@ -554,7 +554,7 @@ class RuntimeContext:
     commit_message: str
     changelog_excluded_commit_patterns: Tuple[Pattern[str], ...]
     version_declarations: Tuple[IVersionReplacer, ...]
-    hvcs_client: hvcs.HvcsBase
+    hvcs_client: hvcs.RvcsInterface
     changelog_insertion_flag: str
     changelog_mask_initial_release: bool
     changelog_mode: ChangelogMode

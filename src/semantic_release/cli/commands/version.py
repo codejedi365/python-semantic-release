@@ -30,6 +30,7 @@ from semantic_release.errors import (
     UnexpectedResponse,
 )
 from semantic_release.gitproject import GitProject
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
 from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
 from semantic_release.version.algorithm import (
     next_version,
@@ -681,7 +682,7 @@ def version(  # noqa: C901
         )
 
     if push_changes:
-        remote_url = runtime.hvcs_client.remote_url(
+        remote_url = hvcs_client.remote_url(
             use_token=not runtime.ignore_token_for_push
         )
 
@@ -710,8 +711,8 @@ def version(  # noqa: C901
     if not make_vcs_release:
         return
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
-        log.info("Remote does not support releases. Skipping release creation...")
+    if not isinstance(hvcs_client, ReleaseSupportInterface):
+        log.info("Remote VCS does not support releases. Skipping release creation...")
         return
 
     license_cfg = runtime.project_metadata.get(

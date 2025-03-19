@@ -16,8 +16,12 @@ import gitlab.v4.objects
 from urllib3.util.url import Url, parse_url
 
 from semantic_release.cli.util import noop_report
-from semantic_release.errors import UnexpectedResponse
-from semantic_release.helpers import logged_function
+from semantic_release.errors import CreateReleaseError
+from semantic_release.helpers import logged_function, parse_git_url
+from semantic_release.hvcs.hvcs_url_mixin import HvcsUrlMixin
+from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
+from semantic_release.hvcs.i_rvcs import RvcsInterface
 from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
 from semantic_release.hvcs.util import suppress_not_found
 
@@ -27,15 +31,17 @@ if TYPE_CHECKING:  # pragma: no cover
     from gitlab.v4.objects import Project as GitLabProject
 
 
-log = logging.getLogger(__name__)
-
-
 # Globals
 log = logging.getLogger(__name__)
 
 
-class Gitlab(RemoteHvcsBase):
-    """Gitlab HVCS interface for interacting with Gitlab repositories"""
+class Gitlab(
+    HvcsChangelogClientInterface,
+    ReleaseSupportInterface,
+    HvcsUrlMixin,
+    RvcsInterface,
+):
+    """Gitlab HVCS class for interacting with Gitlab repositories"""
 
     DEFAULT_ENV_TOKEN_NAME = "GITLAB_TOKEN"  # noqa: S105
     # purposefully not CI_JOB_TOKEN as it is not a personal access token,
@@ -53,10 +59,10 @@ class Gitlab(RemoteHvcsBase):
         allow_insecure: bool = False,
         **_kwargs: Any,
     ) -> None:
-        super().__init__(remote_url)
-        self.token = token
-        self.project_namespace = f"{self.owner}/{self.repo_name}"
+        self._api_url: Url | None = None
         self._project: GitLabProject | None = None
+        self._remote_url = remote_url if parse_git_url(remote_url) else ""
+        self.token = token
 
         domain_url = self._normalize_url(
             hvcs_domain
@@ -76,7 +82,34 @@ class Gitlab(RemoteHvcsBase):
         )
 
         self._client = gitlab.Gitlab(self.hvcs_domain.url, private_token=self.token)
-        self._api_url = parse_url(self._client.api_url)
+
+    @property
+    def repo_name(self) -> str:
+        if self._name is None:
+            _, name = self._get_repository_owner_and_name()
+            self._name = name
+        return self._name
+
+    @property
+    def owner(self) -> str:
+        if self._owner is None:
+            _owner, _ = self._get_repository_owner_and_name()
+            self._owner = _owner
+        return self._owner
+
+    @property
+    def project_namespace(self) -> str:
+        return f"{self.owner}/{self.repo_name}"
+
+    @property
+    def hvcs_domain(self) -> Url:
+        return self._hvcs_domain
+
+    @property
+    def api_url(self) -> Url:
+        if self._api_url is None:
+            self._api_url = parse_url(self._client.api_url)
+        return self._api_url
 
     @property
     def project(self) -> GitLabProject:
@@ -94,7 +127,8 @@ class Gitlab(RemoteHvcsBase):
             log.debug("getting repository owner and name from environment variables")
             return os.environ["CI_PROJECT_NAMESPACE"], os.environ["CI_PROJECT_NAME"]
 
-        return super()._get_repository_owner_and_name()
+        parsed_git_url = parse_git_url(self._remote_url)
+        return parsed_git_url.namespace, parsed_git_url.repo_name
 
     @logged_function(log)
     def create_release(
@@ -120,10 +154,11 @@ class Gitlab(RemoteHvcsBase):
         :raises: GitlabCreateError: If the server cannot perform the request
         """
         if noop:
-            noop_report(f"would have created a release for tag {tag}")
+            noop_report(f"Creating release for {tag}...")
+            noop_report(f"Successfully created release for {tag}")
             return tag
 
-        log.info("Creating release for %s", tag)
+        log.info("Creating release for %s...", tag)
         # ref: https://docs.gitlab.com/ee/api/releases/index.html#create-a-release
         self.project.releases.create(
             {
@@ -137,7 +172,6 @@ class Gitlab(RemoteHvcsBase):
         return tag
 
     @logged_function(log)
-    @suppress_not_found
     def get_release_by_tag(self, tag: str) -> gitlab.v4.objects.ProjectRelease | None:
         """
         Get a release by its tag name.
@@ -153,8 +187,6 @@ class Gitlab(RemoteHvcsBase):
         except gitlab.exceptions.GitlabGetError:
             log.debug("Release %s not found", tag)
             return None
-        except KeyError as err:
-            raise UnexpectedResponse("JSON response is missing commit.id") from err
 
     @logged_function(log)
     def edit_release_notes(  # type: ignore[override]
@@ -185,7 +217,7 @@ class Gitlab(RemoteHvcsBase):
 
     @logged_function(log)
     def create_or_update_release(
-        self, tag: str, release_notes: str, prerelease: bool = False
+        self, tag: str, release_notes: str, prerelease: bool = False, noop: bool = False,
     ) -> str:
         """
         Create or update a release for the given tag in a remote VCS.
@@ -193,6 +225,7 @@ class Gitlab(RemoteHvcsBase):
         :param tag: The tag to create or update the release for
         :param release_notes: The changelog description for this version only
         :param prerelease: This parameter has no effect in GitLab
+        :param noop: If True, do not perform any actions, only log intents
 
         :return: The release id
 
@@ -200,21 +233,19 @@ class Gitlab(RemoteHvcsBase):
         :raises gitlab.exceptions.GitlabAuthenticationError: If the user is not authenticated
         :raises GitlabUpdateError: If the server cannot perform the request
         """
-        try:
-            return self.create_release(
-                tag=tag, release_notes=release_notes, prerelease=prerelease
-            )
-        except gitlab.GitlabCreateError:
-            log.info(
-                "New release %s could not be created for project %s",
-                tag,
-                self.project_namespace,
-            )
 
-        if (release_obj := self.get_release_by_tag(tag)) is None:
-            raise ValueError(
-                f"release for tag {tag} could not be found, and could not be created"
-            )
+        if noop or (release_obj := self.get_release_by_tag(tag)) is None:
+            try:
+                return self.create_release(
+                    tag=tag, release_notes=release_notes, prerelease=prerelease, noop=noop
+                )
+            except gitlab.GitlabCreateError as err:
+                raise CreateReleaseError(
+                    str.join("\n", [
+                        str(err),
+                        f"New release {tag} could not be created for project {self.project_namespace}",
+                    ])
+                ) from err
 
         log.debug(
             "Found existing release commit %s, updating", release_obj.commit.get("id")
@@ -274,9 +305,6 @@ class Gitlab(RemoteHvcsBase):
     def pull_request_url(self, pr_number: str | int) -> str:
         return self.merge_request_url(mr_number=pr_number)
 
-    def upload_dists(self, tag: str, dist_glob: str) -> int:
-        return super().upload_dists(tag, dist_glob)
-
     def create_release_url(self, tag: str = "") -> str:
         tag_str = tag.strip()
         return self.create_repo_url(repo_path=f"/-/releases/{tag_str}")
@@ -306,6 +334,3 @@ class Gitlab(RemoteHvcsBase):
             self.create_release_url,
             self.format_w_official_vcs_name,
         )
-
-
-RemoteHvcsBase.register(Gitlab)
