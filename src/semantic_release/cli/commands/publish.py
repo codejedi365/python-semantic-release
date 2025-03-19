@@ -7,8 +7,8 @@ from git import Repo
 
 from semantic_release.cli.util import noop_report
 from semantic_release.globals import logger
-from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
-from semantic_release.version.algorithm import tags_and_versions
+from semantic_release.hvcs.i_hvcs_publish import HvcsPublishingClientInterface
+from semantic_release.version import tags_and_versions
 
 if TYPE_CHECKING:  # pragma: no cover
     from semantic_release.cli.cli_context import CliContextObj
@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def publish_distributions(
     tag: str,
-    hvcs_client: RemoteHvcsBase,
+    hvcs_client: HvcsPublishingClientInterface,
     dist_glob_patterns: tuple[str, ...],
     noop: bool = False,
 ) -> None:
@@ -35,7 +35,7 @@ def publish_distributions(
 
     logger.info("Uploading distributions to release")
     for pattern in dist_glob_patterns:
-        hvcs_client.upload_dists(tag=tag, dist_glob=pattern)  # type: ignore[attr-defined]
+        hvcs_client.upload_dists(tag=tag, dist_glob=pattern)
 
 
 @click.command(
@@ -83,7 +83,7 @@ def publish(cli_ctx: CliContextObj, tag: str) -> None:
         click.echo(f"Tag '{tag}' not found in local repository!", err=True)
         ctx.exit(1)
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
+    if not isinstance(hvcs_client, HvcsPublishingClientInterface):
         click.echo(
             "Remote does not support artifact upload. Exiting with no action taken...",
             err=True,

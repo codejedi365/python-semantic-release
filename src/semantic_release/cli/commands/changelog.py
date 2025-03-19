@@ -15,7 +15,7 @@ from semantic_release.cli.changelog_writer import (
 )
 from semantic_release.cli.util import noop_report
 from semantic_release.globals import logger
-from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
 
 if TYPE_CHECKING:  # pragma: no cover
     from semantic_release.cli.cli_context import CliContextObj
@@ -62,7 +62,7 @@ def post_release_notes(
     release_tag: str,
     release_notes: str,
     prerelease: bool,
-    hvcs_client: RemoteHvcsBase,
+    hvcs_client: ReleaseSupportInterface,
     noop: bool = False,
 ) -> None:
     if noop:
@@ -124,7 +124,7 @@ def changelog(cli_ctx: CliContextObj, release_tag: str | None) -> None:
     if not release_tag:
         return
 
-    if not isinstance(hvcs_client, RemoteHvcsBase):
+    if not isinstance(hvcs_client, ReleaseSupportInterface):
         click.echo(
             "Remote does not support releases. Skipping release notes update...",
             err=True,

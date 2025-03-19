@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from pytest_lazy_fixtures.lazy_fixture import lf as lazy_fixture
 
-from semantic_release.hvcs._base import HvcsBase
+from semantic_release.hvcs.i_rvcs import RvcsInterface
 
 from tests.const import EXAMPLE_REPO_NAME, EXAMPLE_REPO_OWNER
 from tests.fixtures.git_repo import example_git_https_url, example_git_ssh_url
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class ArbitraryHvcs(HvcsBase):
+class ArbitraryHvcs(RvcsInterface):
     def remote_url(self, use_token: bool) -> str:
         return super().remote_url(use_token)
 

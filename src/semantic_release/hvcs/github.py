@@ -20,8 +20,12 @@ from semantic_release.errors import (
     UnexpectedResponse,
 )
 from semantic_release.globals import logger
-from semantic_release.helpers import logged_function
-from semantic_release.hvcs.remote_hvcs_base import RemoteHvcsBase
+from semantic_release.helpers import logged_function, parse_git_url
+from semantic_release.hvcs.hvcs_url_mixin import HvcsUrlMixin
+from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
+from semantic_release.hvcs.i_hvcs_publish import HvcsPublishingClientInterface
+from semantic_release.hvcs.i_hvcs_release import ReleaseSupportInterface
+from semantic_release.hvcs.i_rvcs import RvcsInterface
 from semantic_release.hvcs.token_auth import TokenAuth
 from semantic_release.hvcs.util import build_requests_session, suppress_not_found
 
@@ -47,7 +51,13 @@ if mimetypes.guess_type("test.md")[0] != "text/markdown":
     mimetypes.add_type("text/markdown", ".md")
 
 
-class Github(RemoteHvcsBase):
+class Github(
+    HvcsChangelogClientInterface,
+    ReleaseSupportInterface,
+    HvcsPublishingClientInterface,
+    HvcsUrlMixin,
+    RvcsInterface,
+):
     """
     GitHub HVCS interface for interacting with GitHub repositories
 
@@ -90,7 +100,7 @@ class Github(RemoteHvcsBase):
         allow_insecure: bool = False,
         **_kwargs: Any,
     ) -> None:
-        super().__init__(remote_url)
+        self._remote_url = remote_url if parse_git_url(remote_url) else ""
         self.token = token
         auth = None if not self.token else TokenAuth(self.token)
         self.session = build_requests_session(auth=auth)
@@ -192,6 +202,28 @@ class Github(RemoteHvcsBase):
             ).url.rstrip("/")
         )
 
+    @property
+    def repo_name(self) -> str:
+        if self._name is None:
+            _, name = self._get_repository_owner_and_name()
+            self._name = name
+        return self._name
+
+    @property
+    def owner(self) -> str:
+        if self._owner is None:
+            _owner, _ = self._get_repository_owner_and_name()
+            self._owner = _owner
+        return self._owner
+
+    @property
+    def api_url(self) -> Url:
+        return self._api_url
+
+    @property
+    def hvcs_domain(self) -> Url:
+        return self._hvcs_domain
+
     @lru_cache(maxsize=1)
     def _get_repository_owner_and_name(self) -> tuple[str, str]:
         # Github actions context
@@ -200,7 +232,8 @@ class Github(RemoteHvcsBase):
             owner, name = os.environ["GITHUB_REPOSITORY"].rsplit("/", 1)
             return owner, name
 
-        return super()._get_repository_owner_and_name()
+        parsed_git_url = parse_git_url(self._remote_url)
+        return parsed_git_url.namespace, parsed_git_url.repo_name
 
     @logged_function(logger)
     def create_release(
@@ -348,7 +381,7 @@ class Github(RemoteHvcsBase):
 
     @logged_function(logger)
     def create_or_update_release(
-        self, tag: str, release_notes: str, prerelease: bool = False
+        self, tag: str, release_notes: str, prerelease: bool = False, noop: bool = False,
     ) -> int:
         """
         Post release changelog
@@ -557,6 +590,3 @@ class Github(RemoteHvcsBase):
             self.create_release_url,
             self.format_w_official_vcs_name,
         )
-
-
-RemoteHvcsBase.register(Github)

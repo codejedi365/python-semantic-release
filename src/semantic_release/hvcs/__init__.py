@@ -1,4 +1,4 @@
-from semantic_release.hvcs._base import HvcsBase
+from semantic_release.hvcs.i_rvcs import RvcsInterface
 from semantic_release.hvcs.bitbucket import Bitbucket
 from semantic_release.hvcs.gitea import Gitea
 from semantic_release.hvcs.github import Github
@@ -11,7 +11,7 @@ __all__ = [
     "Gitea",
     "Github",
     "Gitlab",
-    "HvcsBase",
+    "RvcsInterface",
     "RemoteHvcsBase",
     "TokenAuth",
 ]

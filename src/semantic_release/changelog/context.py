@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from jinja2 import Environment
 
     from semantic_release.changelog.release_history import Release, ReleaseHistory
-    from semantic_release.hvcs._base import HvcsBase
+    from semantic_release.hvcs.i_changelog_support import HvcsChangelogClientInterface
     from semantic_release.version.version import Version
 
 
@@ -54,6 +54,7 @@ class ChangelogMode(Enum):
 @dataclass
 class ChangelogContext:
     repo_name: str
+    # TODO: change repo_owner to repo_namespace
     repo_owner: str
     hvcs_type: str
     history: ReleaseHistory
@@ -72,24 +73,34 @@ class ChangelogContext:
 
 
 def make_changelog_context(
-    hvcs_client: HvcsBase,
+    repo_name: str,
+    repo_namespace: str,
     release_history: ReleaseHistory,
     mode: ChangelogMode,
     prev_changelog_file: Path,
     insertion_flag: str,
     mask_initial_release: bool,
+    hvcs_client: HvcsChangelogClientInterface | None = None,
 ) -> ChangelogContext:
+    hvcs_filters = (
+        () if hvcs_client is None else hvcs_client.get_changelog_context_filters()
+    )
+
     return ChangelogContext(
-        repo_name=hvcs_client.repo_name,
-        repo_owner=hvcs_client.owner,
+        repo_name=repo_name,
+        repo_owner=repo_namespace,
         history=release_history,
         changelog_mode=mode.value,
         changelog_insertion_flag=insertion_flag,
         mask_initial_release=mask_initial_release,
         prev_changelog_file=str(prev_changelog_file),
-        hvcs_type=hvcs_client.__class__.__name__.lower(),
+        hvcs_type=(
+            str(None).lower()
+            if hvcs_client is None
+            else hvcs_client.__class__.__name__.lower()
+        ),
         filters=(
-            *hvcs_client.get_changelog_context_filters(),
+            *hvcs_filters,
             create_pypi_url,
             read_file,
             convert_md_to_rst,

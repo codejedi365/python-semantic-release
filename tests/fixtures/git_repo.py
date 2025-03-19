@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import NotRequired
 
-    from semantic_release.hvcs import HvcsBase
+    from semantic_release.hvcs import RvcsInterface
 
     from tests.conftest import (
         BuildRepoOrCopyCacheFn,
@@ -160,7 +160,7 @@ if TYPE_CHECKING:
             mask_initial_release: bool = True,  # Default as of v10
             package_name: str = ...,
             monorepo: bool = False,
-        ) -> tuple[Path, HvcsBase]: ...
+        ) -> tuple[Path, RvcsInterface]: ...
 
     class CommitNReturnChangelogEntryFn(Protocol):
         def __call__(self, git_repo: Repo, commit_def: CommitDef) -> CommitDef: ...
@@ -1209,7 +1209,7 @@ def configure_base_repo(  # noqa: C901
         mask_initial_release: bool = True,  # Default as of v10
         package_name: str = EXAMPLE_PROJECT_NAME,
         monorepo: bool = False,
-    ) -> tuple[Path, HvcsBase]:
+    ) -> tuple[Path, RvcsInterface]:
         # Make sure we are in the dest directory
         with temporary_working_directory(dest_dir):
             # Set parser configuration
