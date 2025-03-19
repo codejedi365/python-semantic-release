@@ -113,21 +113,52 @@ class Gitlab(RemoteHvcsBase):
 
         A configured private token is prioritized over CI_JOB_TOKEN, if both are available
         """
+        private_token = configured_token or None
+        job_token = os.getenv("CI_JOB_TOKEN", None)
+
         token_args: TokenArgs = {
-            "private_token": configured_token,  # assumed to be a personal access token
+            "private_token": private_token,  # assumed to be a personal access token
             "job_token": None,
         }
 
-        # GitLab Server version 17.2 enabled CI_JOB_TOKEN to write to repository
-        if self.get_gitlab_server_version()[:2] >= (17, 2):
-            job_token = os.getenv("CI_JOB_TOKEN", "")
+        # if configured token isn't defined, we don't automatically load the job token because
+        # we expect the user to know which token they are using. None of the other VCS clients autoload a token
+        if job_token and job_token == private_token:
+            gitlab_version = self.get_gitlab_server_version()
 
-            if job_token and job_token == configured_token:
+            if gitlab_version == (0, 0, 0):
+                log.warning(
+                    "Unable to determine the GitLab server version. Using the configured token."
+                )
+
+            # GitLab Server version 17.2 added the feature flag for allowing CI_JOB_TOKEN to write to repository
+            # It is still NOT ENABLED on GITLAB.com as of 2024-11-23 (v17.6). Feature flag is disabled by default
+            # unless self hosted GitLab environments have enabled it.
+            elif gitlab_version[:2] < (17, 2):
+                log.warning(
+                    str.join(" ", [
+                        f"GitLab v{str.join('.', map(str, gitlab_version))} does not allow the CI_JOB_TOKEN",
+                        "to write to the repository. You must use a personal/group access",
+                        "token for writing (API access required).",
+                    ])
+                )
+            else:
+                # GitLab 17.2 or later
                 # Swap to only use job token if the configured_token is actually the CI_JOB_TOKEN
                 token_args = {
                     "private_token": None,
                     "job_token": job_token,
                 }
+
+                if self.hvcs_domain.host == Gitlab.DEFAULT_DOMAIN:
+                    log.warning(
+                        str.join(" ", [
+                            "GitLab.com (as of 11/23/2024, v17.6) has not enabled the feature flag to",
+                            "allow the $CI_JOB_TOKEN to write to the repository. You must use --no-push",
+                            "option or configure the git fetch url with a personal/group access token.",
+                        ])
+                    )
+                    token_args["job_token"] = None
 
         return gitlab.Gitlab(url=self.hvcs_domain.url, **token_args)
 

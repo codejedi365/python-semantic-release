@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import zip_longest
 import os
 from typing import TYPE_CHECKING
 from unittest import mock
@@ -77,20 +78,6 @@ def default_gl_client(
             False,
         ),
         (
-            # Gather CI_JOB_TOKEN from environment, different from token does not override
-            {"CI_JOB_TOKEN": "job_token_123"},
-            None,
-            f"https://{Gitlab.DEFAULT_DOMAIN}",
-            False,
-        ),
-        (
-            # Gather CI_JOB_TOKEN from environment
-            {"CI_JOB_TOKEN": "abc123"},
-            None,
-            f"https://{Gitlab.DEFAULT_DOMAIN}",
-            False,
-        ),
-        (
             # Custom domain with path prefix (derives from environment)
             {"CI_SERVER_URL": "https://special.custom.server/vcs/"},
             None,
@@ -149,16 +136,6 @@ def test_gitlab_client_init(
 
         # Evaluate (expected -> actual)
         assert expected_hvcs_domain == client.hvcs_domain.url
-        if "CI_JOB_TOKEN" in patched_os_environ and (
-            patched_os_environ["CI_JOB_TOKEN"] == token or not token
-        ):
-            assert client._client.job_token == patched_os_environ["CI_JOB_TOKEN"]
-            assert client._client.private_token is None
-            assert client.token == patched_os_environ["CI_JOB_TOKEN"]
-        else:
-            assert client._client.job_token is None
-            assert client._client.private_token == token
-            assert token == client.token
         assert remote_url == client._remote_url
 
 
@@ -216,6 +193,98 @@ def test_gitlab_get_repository_owner_and_name(
 
         # Evaluate (expected -> actual)
         assert expected_result == result
+
+
+@pytest.mark.parametrize(
+    "patched_os_environ, configured_token, expected_priv_token, expected_job_token, expected_auth_url",
+    [
+        (
+            patched_os_environ,
+            configured_token,
+            expected_priv_token,
+            expected_job_token,
+            str.join("", [
+                "https://",
+                f'gitlab-ci-token:{token}@' if token else "",
+                f"{EXAMPLE_HVCS_DOMAIN}/{EXAMPLE_REPO_OWNER}/{EXAMPLE_REPO_NAME}.git",
+            ])
+        )
+        for patched_os_environ, configured_token, expected_priv_token, expected_job_token, token in [
+            *[
+                # Personal token is used when configured even when no CI_JOB_TOKEN is present
+                (
+                    {"CI_SERVER_VERSION": gl_version},
+                    personal_token,
+                    personal_token,
+                    None,
+                    personal_token,
+                )
+                for personal_token, gl_version in zip_longest(
+                    [], ["16.0.0", "17.1.0", "17.2.0", "17.2.1", "17.3.0", "18.0.0"], fillvalue="aabbcc"
+                )
+            ],
+            *[
+                # Personal token always overrides when its not CI_JOB_TOKEN regardless of server version
+                (
+                    {"CI_SERVER_VERSION": gl_version, "CI_JOB_TOKEN": "job_token_123"},
+                    personal_token,
+                    personal_token,
+                    None,
+                    personal_token,
+                )
+                for personal_token, gl_version in zip_longest(
+                    [], ["16.0.0", "17.1.0", "17.2.0", "17.2.1", "17.3.0", "18.0.0"], fillvalue="aabbcc"
+                )
+            ],
+            *[
+                # Uses CI_JOB_TOKEN for client auth since it was configured and server supports it
+                (
+                    {"CI_SERVER_VERSION": gl_version, "CI_JOB_TOKEN": job_token},
+                    job_token,
+                    None,
+                    job_token,
+                    job_token,
+                )
+                for job_token, gl_version in zip_longest(
+                    [], ["17.2.0", "17.2.1", "17.3.0", "18.0.0"], fillvalue="job_token_123"
+                )
+            ],
+            *[
+                # token is none since the user did not configure the remote.token value
+                # regardless if server supports it or CI_JOB_TOKEN is in the environment
+                (
+                    {"CI_SERVER_VERSION": gl_version, "CI_JOB_TOKEN": job_token},
+                    non_configured_token,
+                    None,
+                    None,
+                    None,
+                )
+                for non_configured_token in ["", None]
+                for job_token, gl_version in zip_longest(
+                    [], ["", "16.0.0", "17.1.0", "17.2.0", "17.2.1", "17.3.0", "18.0.0"], fillvalue="job_token_123"
+                )
+            ],
+        ]
+    ],
+)
+def test_gitlab_token_load(
+    patched_os_environ: dict[str, str],
+    configured_token: str | None,
+    example_git_https_url: str,
+    expected_priv_token: str | None,
+    expected_job_token: str | None,
+    expected_auth_url: str,
+):
+    with mock.patch.dict(os.environ, patched_os_environ, clear=True):
+        gl_client = Gitlab(
+            remote_url=example_git_https_url,
+            hvcs_domain=EXAMPLE_HVCS_DOMAIN,
+            token=configured_token,
+        )
+
+    assert expected_priv_token == gl_client._client.private_token
+    assert expected_job_token == gl_client._client.job_token
+    assert expected_auth_url == gl_client.remote_url()
 
 
 @pytest.mark.parametrize(
