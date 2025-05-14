@@ -161,5 +161,8 @@ fi
 # Copy inputs into correctly-named environment variables
 export GH_TOKEN="${INPUT_GITHUB_TOKEN}"
 
+# normalize extra spaces into single spaces as you combine the arguments
+CMD_ARGS="$(printf '%s' "${ROOT_OPTIONS[*]} version ${ARGS[*]}" | sed 's/  [ ]*/ /g')"
+
 # Run Semantic Release (explicitly use the GitHub action version)
-explicit_run_cmd "/psr/.venv/bin/semantic-release ${ROOT_OPTIONS[*]} version ${ARGS[*]}"
+explicit_run_cmd "$PSR_VENV_BIN/semantic-release $CMD_ARGS"
