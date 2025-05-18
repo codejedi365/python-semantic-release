@@ -37,7 +37,6 @@ from semantic_release.changelog.template import environment
 from semantic_release.cli.const import DEFAULT_CONFIG_FILE
 from semantic_release.cli.masking_filter import MaskingFilter
 from semantic_release.commit_parser import (
-    AngularCommitParser,
     CommitParser,
     ConventionalCommitMonorepoParser,
     ConventionalCommitParser,
@@ -72,12 +71,10 @@ class HvcsClient(str, Enum):
 
 
 _known_commit_parsers: dict[str, type[CommitParser[Any, Any]]] = {
-    "angular": AngularCommitParser,
     "conventional": ConventionalCommitParser,
     "conventional-monorepo": ConventionalCommitMonorepoParser,
     "emoji": EmojiCommitParser,
     "scipy": ScipyCommitParser,
-    "tag": TagCommitParser,
 }
 
 
@@ -401,25 +398,9 @@ class RawConfig(BaseModel):
     @field_validator("commit_parser", mode="after")
     @classmethod
     def commit_parser_deprecation(cls, val: str) -> str:
-        if val == "tag":
+        if val in ("angular", "tag"):
             msg = f"The '{val}' parser is deprecated and was removed in v11.0.0."
             raise ValueError(msg)
-        return val
-
-    @field_validator("commit_parser", mode="after")
-    @classmethod
-    def angular_commit_parser_deprecation_warning(cls, val: str) -> str:
-        if val == "angular":
-            logger.warning(
-                str.join(
-                    " ",
-                    [
-                        "The 'angular' parser is deprecated and will be removed in v11.",
-                        "The Angular parser is being renamed to the conventional commit parser,",
-                        "which is selected by switching the 'commit_parser' value to 'conventional'.",
-                    ],
-                )
-            )
         return val
 
     @field_validator("build_command_env", mode="after")
