@@ -20,10 +20,6 @@ from semantic_release.commit_parser.scipy import (
     ScipyCommitParser,
     ScipyParserOptions,
 )
-from semantic_release.commit_parser.tag import (
-    TagCommitParser,
-    TagParserOptions,
-)
 from semantic_release.commit_parser.token import (
     ParsedCommit,
     ParseError,
@@ -44,8 +40,6 @@ __all__ = [
     "EmojiParserOptions",
     "ScipyCommitParser",
     "ScipyParserOptions",
-    "TagCommitParser",
-    "TagParserOptions",
     "ParsedCommit",
     "ParseError",
     "ParseResult",
