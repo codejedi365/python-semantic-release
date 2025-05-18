@@ -2,10 +2,6 @@ from semantic_release.commit_parser._base import (
     CommitParser,
     ParserOptions,
 )
-from semantic_release.commit_parser.angular import (
-    AngularCommitParser,
-    AngularParserOptions,
-)
 from semantic_release.commit_parser.conventional import (
     ConventionalCommitMonorepoParser,
     ConventionalCommitMonorepoParserOptions,
@@ -30,8 +26,6 @@ from semantic_release.commit_parser.token import (
 __all__ = [
     "CommitParser",
     "ParserOptions",
-    "AngularCommitParser",
-    "AngularParserOptions",
     "ConventionalCommitParser",
     "ConventionalCommitParserOptions",
     "ConventionalCommitMonorepoParser",
