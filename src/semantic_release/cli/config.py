@@ -45,7 +45,6 @@ from semantic_release.commit_parser import (
     ParseResult,
     ParserOptions,
     ScipyCommitParser,
-    TagCommitParser,
 )
 from semantic_release.const import COMMIT_MESSAGE, DEFAULT_COMMIT_AUTHOR
 from semantic_release.errors import (
@@ -401,18 +400,10 @@ class RawConfig(BaseModel):
 
     @field_validator("commit_parser", mode="after")
     @classmethod
-    def tag_commit_parser_deprecation_warning(cls, val: str) -> str:
+    def commit_parser_deprecation(cls, val: str) -> str:
         if val == "tag":
-            logger.warning(
-                str.join(
-                    " ",
-                    [
-                        "The legacy 'tag' parser is deprecated and will be removed in v11.",
-                        "Recommend swapping to our emoji parser (higher-compatibility)",
-                        "or switch to another supported parser.",
-                    ],
-                )
-            )
+            msg = f"The '{val}' parser is deprecated and was removed in v11.0.0."
+            raise ValueError(msg)
         return val
 
     @field_validator("commit_parser", mode="after")
