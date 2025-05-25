@@ -8,7 +8,7 @@ import os
 from functools import lru_cache
 from pathlib import PurePosixPath
 from re import compile as regexp
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from requests import HTTPError, JSONDecodeError
 from urllib3.util.url import Url, parse_url
@@ -316,7 +316,7 @@ class Github(RemoteHvcsBase):
 
         try:
             data = response.json()
-            return data["id"]
+            return cast("int", data["id"])
         except JSONDecodeError as err:
             raise UnexpectedResponse("Unreadable json response") from err
         except KeyError as err:
