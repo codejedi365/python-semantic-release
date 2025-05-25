@@ -180,13 +180,13 @@ error_summary = true
 follow_imports = "normal"
 enable_error_code = ["ignore-without-code"]
 disallow_untyped_calls = true
-# warn_return_any = true
+warn_return_any = true
 strict_optional = true
 warn_no_return = true
 warn_redundant_casts = true
-# warn_unused_ignores = true
+warn_unused_ignores = true
 warn_unused_configs = true
-# warn_unreachable = true
+warn_unreachable = true
 disallow_untyped_defs = true
 check_untyped_defs = true
 cache_dir = "/dev/null"
@@ -223,8 +223,6 @@ select = ["ALL"]
 # for any of these codes you can also run `ruff rule [CODE]`
 # which explains it in the terminal
 ignore = [
-  # attribute shadows builtin (e.g. Foo.list())
-  "A003",
   # Annotations (flake8-annotations)
   # missing "self" type-hint
   "ANN101",
