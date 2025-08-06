@@ -211,13 +211,13 @@ To set commit exclusion patterns for a conventional commits parsers, add the fol
     [tool.semantic_release.changelog]
     # Recommended patterns for conventional commits parser that is scope aware
     exclude_commit_patterns = [
-        '''chore(?:\([^)]*?\))?: .+''',
-        '''ci(?:\([^)]*?\))?: .+''',
-        '''refactor(?:\([^)]*?\))?: .+''',
-        '''style(?:\([^)]*?\))?: .+''',
-        '''test(?:\([^)]*?\))?: .+''',
-        '''build\((?!deps\): .+)''',
-        '''Initial [Cc]ommit.*''',
+        '''^chore(?:\([^)]*?\))?: .+''',
+        '''^ci(?:\([^)]*?\))?: .+''',
+        '''^refactor(?:\([^)]*?\))?: .+''',
+        '''^style(?:\([^)]*?\))?: .+''',
+        '''^test(?:\([^)]*?\))?: .+''',
+        '''^build\((?!deps\): .+)''',
+        '''^Initial [Cc]ommit.*''',
     ]
 
 .. seealso::
