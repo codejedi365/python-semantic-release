@@ -1,1 +1,1 @@
-python-semantic-release == 10.3.0
+git+https://github.com/codejedi365/python-semantic-release.git@fix/github-actions-outputs
