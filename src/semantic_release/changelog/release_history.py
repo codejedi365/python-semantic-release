@@ -154,7 +154,7 @@ class ReleaseHistory:
                 logger.debug("commit has type '%s'", commit_type)
 
                 has_exclusion_match = any(
-                    pattern.match(commit_message) for pattern in exclude_commit_patterns
+                    pattern.search(commit_message) for pattern in exclude_commit_patterns
                 )
 
                 commit_level_bump = (
