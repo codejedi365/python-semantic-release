@@ -1,7 +1,7 @@
 import pytest
 
 from semantic_release.const import SEMVER_REGEX
-from semantic_release.version.translator import VersionTranslator
+from semantic_release.version.translator import SemVerTag2VersionConverter
 from semantic_release.version.version import Version
 
 from tests.const import (
@@ -52,7 +52,7 @@ def test_invalid_semver_not_matched(invalid_version_str: str):
 @pytest.mark.parametrize("fmt", ["version", "{versioN}", "v{major}.{minor}.{patch}"])
 def test_invalid_tag_format(fmt: str):
     with pytest.raises(ValueError) as err:
-        VersionTranslator(tag_format=fmt)
+        SemVerTag2VersionConverter(tag_format=fmt)
     assert all(("tag_format" in str(err), "version" in str(err), fmt in str(err)))
 
 
@@ -75,7 +75,7 @@ def test_invalid_tag_format(fmt: str):
 def test_translator_converts_versions_with_default_formatting_rules(
     version_string: str, tag_format: str, prerelease_token: str
 ):
-    translator = VersionTranslator(
+    translator = SemVerTag2VersionConverter(
         tag_format=tag_format, prerelease_token=prerelease_token
     )
 
