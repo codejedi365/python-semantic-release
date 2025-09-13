@@ -37,7 +37,18 @@ class LevelBump(IntEnum):
         Equally,
         >>> LevelBump.from_string("minor") == LevelBump.MINOR
         """
-        return cls[val.upper().replace("-", "_")]
+        if not isinstance(val, str):
+            raise ValueError(f"Expected a string, got {type(val)}")
+
+        if not val:
+            raise ValueError("Expected a non-empty string")
+
+        name = val.upper().replace("-", "_")
+
+        if name not in cls.__members__:
+            raise ValueError(f"Invalid Level Bump name: {val}")
+
+        return cls[name]
 
 
 class SemanticReleaseLogLevels(IntEnum):

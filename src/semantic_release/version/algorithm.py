@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Iterable
 
 from semantic_release.commit_parser import ParsedCommit
 from semantic_release.commit_parser.token import ParseError
-from semantic_release.const import DEFAULT_VERSION
+from semantic_release.const import DEFAULT_VERSION_STR
 from semantic_release.enums import LevelBump, SemanticReleaseLogLevels
 from semantic_release.errors import InternalError, InvalidVersion
 from semantic_release.globals import logger
@@ -26,12 +26,12 @@ if TYPE_CHECKING:  # pragma: no cover
         ParseResult,
         ParserOptions,
     )
-    from semantic_release.version.translator import VersionTranslator
+    from semantic_release.version.translator import SemVerTag2VersionConverter
     from semantic_release.version.version import Version
 
 
 def tags_and_versions(
-    tags: Iterable[Tag], translator: VersionTranslator
+    tags: Iterable[Tag], translator: SemVerTag2VersionConverter
 ) -> list[tuple[Tag, Version]]:
     """
     Return a list of 2-tuples, where each element is a tuple (tag, version)
@@ -243,7 +243,7 @@ def _increment_version(
 
 def next_version(
     repo: Repo,
-    translator: VersionTranslator,
+    translator: SemVerTag2VersionConverter,
     commit_parser: CommitParser[ParseResult, ParserOptions],
     allow_zero_version: bool,
     major_on_zero: bool,
@@ -258,7 +258,7 @@ def next_version(
     # be able to parse the default version. So we first cast it to a tag using the default
     # value and the users configured tag format, then parse it back to a version object
     default_initial_version = translator.from_tag(
-        translator.str_to_tag(DEFAULT_VERSION)
+        translator.str_to_tag(DEFAULT_VERSION_STR)
     )
     if default_initial_version is None:
         # This should never happen, but if it does, it's a bug

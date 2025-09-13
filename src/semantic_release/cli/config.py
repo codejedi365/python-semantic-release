@@ -60,7 +60,7 @@ from semantic_release.helpers import dynamic_import
 from semantic_release.version.declarations.i_version_replacer import IVersionReplacer
 from semantic_release.version.declarations.pattern import PatternVersionDeclaration
 from semantic_release.version.declarations.toml import TomlVersionDeclaration
-from semantic_release.version.translator import VersionTranslator
+from semantic_release.version.translator import SemVerTag2VersionConverter
 
 NonEmptyString = Annotated[str, Field(..., min_length=1)]
 
@@ -504,6 +504,57 @@ class RawConfig(BaseModel):
 
         return self
 
+    def load_commit_parser(self) -> CommitParser:
+        try:
+            commit_parser_cls = (
+                _known_commit_parsers[self.commit_parser]
+                if self.commit_parser in _known_commit_parsers
+                else dynamic_import(self.commit_parser)
+            )
+        except ValueError as err:
+            raise ParserLoadError(
+                str.join(
+                    "\n",
+                    [
+                        f"Unrecognized commit parser value: {self.commit_parser!r}.",
+                        str(err),
+                        "Unable to load the given parser! Check your configuration!",
+                    ],
+                )
+            ) from err
+        except ModuleNotFoundError as err:
+            raise ParserLoadError(
+                str.join(
+                    "\n",
+                    [
+                        str(err),
+                        "Unable to import your custom parser! Check your configuration!",
+                    ],
+                )
+            ) from err
+        except AttributeError as err:
+            raise ParserLoadError(
+                str.join(
+                    "\n",
+                    [
+                        str(err),
+                        "Unable to find the parser class inside the given module",
+                    ],
+                )
+            ) from err
+
+        commit_parser_opts_class = commit_parser_cls.parser_options
+        # TODO: Breaking change v11
+        # commit_parser_opts_class = commit_parser_cls.get_default_options().__class__
+        try:
+            return commit_parser_cls(
+                options=commit_parser_opts_class(**self.commit_parser_options)
+            )
+        except TypeError as err:
+            raise ParserLoadError(
+                str.join("\n", [str(err), f"Failed to initialize {self.commit_parser}"])
+            ) from err
+
 
 @dataclass
 class GlobalCommandLineOptions:
@@ -545,7 +596,7 @@ class RuntimeContext:
     project_metadata: dict[str, Any]
     repo_dir: Path
     commit_parser: CommitParser[ParseResult, ParserOptions]
-    version_translator: VersionTranslator
+    version_translator: SemVerTag2VersionConverter
     major_on_zero: bool
     allow_zero_version: bool
     prerelease: bool
@@ -826,7 +877,7 @@ class RuntimeContext:
         )
 
         # version_translator
-        version_translator = VersionTranslator(
+        version_translator = SemVerTag2VersionConverter(
             tag_format=raw.tag_format, prerelease_token=branch_config.prerelease_token
         )
 

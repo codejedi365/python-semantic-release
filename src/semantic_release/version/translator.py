@@ -8,13 +8,41 @@ from semantic_release.helpers import check_tag_format
 from semantic_release.version.version import Version
 
 
-class VersionTranslator:
+class SemVerTag2VersionConverter:
     """
-    Class to handle translation from Git tags into their corresponding Version
+    Class to handle translation from version tag strings into their corresponding Version
     instances.
     """
 
-    _VERSION_REGEX = SEMVER_REGEX
+    def __init__(
+        self,
+        tag_format: str = "v{version}",
+    ) -> None:
+        check_tag_format(tag_format)
+        self.tag_format = tag_format
+        self.from_tag_re = self._invert_tag_format_to_re(self.tag_format)
+
+    def from_tag(self, tag: str) -> Version | None:
+        """
+        Return a Version instance from a Git tag, if tag_format matches the format
+        which would have generated the tag from a version. Otherwise return None.
+        For example, a tag of 'v1.2.3' should be matched if `tag_format = 'v{version}`,
+        but not if `tag_format = staging--v{version}`.
+        """
+        if not (tag_match := self.from_tag_re.match(tag)):
+            return None
+
+        return Version.parse(
+            tag_match.group("version"),
+            tag_format=self.tag_format,
+        )
+
+    def str_to_tag(self, version_str: str) -> str:
+        """Formats a version string into a tag name"""
+        return self.tag_format.format(version=version_str)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__qualname__}{{tag_format={self.tag_format}}}"
 
     @classmethod
     def _invert_tag_format_to_re(cls, tag_format: str) -> re.Pattern[str]:
@@ -31,53 +59,9 @@ class VersionTranslator:
         >>> assert m is not None
         >>> assert m.expand(r"\g<version>") == version
         """
-        pat = re.compile(
-            tag_format.replace(r"{version}", r"(?P<version>.*)"),
+        pattern = re.compile(
+            tag_format.replace(r"{version}", r"(?P<version>" + SEMVER_REGEX.pattern + r")"),
             flags=re.VERBOSE,
         )
-        logger.debug("inverted tag_format %r to %r", tag_format, pat.pattern)
-        return pat
-
-    def __init__(
-        self,
-        tag_format: str = "v{version}",
-        prerelease_token: str = "rc",  # noqa: S107
-    ) -> None:
-        check_tag_format(tag_format)
-        self.tag_format = tag_format
-        self.prerelease_token = prerelease_token
-        self.from_tag_re = self._invert_tag_format_to_re(self.tag_format)
-
-    def from_string(self, version_str: str) -> Version:
-        """
-        Return a Version instance from a string. Delegates directly to Version.parse,
-        using the translator's own stored values for tag_format and prerelease
-        """
-        return Version.parse(
-            version_str,
-            tag_format=self.tag_format,
-            prerelease_token=self.prerelease_token,
-        )
-
-    def from_tag(self, tag: str) -> Version | None:
-        """
-        Return a Version instance from a Git tag, if tag_format matches the format
-        which would have generated the tag from a version. Otherwise return None.
-        For example, a tag of 'v1.2.3' should be matched if `tag_format = 'v{version}`,
-        but not if `tag_format = staging--v{version}`.
-        """
-        tag_match = self.from_tag_re.match(tag)
-        if not tag_match:
-            return None
-        raw_version_str = tag_match.group("version")
-        return self.from_string(raw_version_str)
-
-    def str_to_tag(self, version_str: str) -> str:
-        """Formats a version string into a tag name"""
-        return self.tag_format.format(version=version_str)
-
-    def __repr__(self) -> str:
-        return (
-            f"{type(self).__qualname__}(tag_format={self.tag_format}, "
-            f"prerelease_token={self.prerelease_token})"
-        )
+        logger.debug("inverted tag_format %r to %r", tag_format, pattern.pattern)
+        return pattern

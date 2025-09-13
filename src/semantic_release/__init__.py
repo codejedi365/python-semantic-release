@@ -21,7 +21,7 @@ from semantic_release.errors import (
 )
 from semantic_release.version import (
     Version,
-    VersionTranslator,
+    SemVerTag2VersionConverter,
     next_version,
     tags_and_versions,
 )
@@ -41,7 +41,7 @@ __all__ = [
     "InvalidConfiguration",
     "InvalidVersion",
     "Version",
-    "VersionTranslator",
+    "SemVerTag2VersionConverter",
     "next_version",
     "tags_and_versions",
 ]

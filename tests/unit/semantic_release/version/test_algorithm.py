@@ -12,7 +12,7 @@ from semantic_release.version.algorithm import (
     _traverse_graph_for_commits,
     tags_and_versions,
 )
-from semantic_release.version.translator import VersionTranslator
+from semantic_release.version.translator import SemVerTag2VersionConverter
 from semantic_release.version.version import Version
 
 from tests.fixtures.repos import repo_w_initial_commit
@@ -146,7 +146,7 @@ def test_traverse_graph_for_commits():
 )
 def test_sorted_repo_tags_and_versions(tags: list[str], sorted_tags: list[str]):
     repo = Repo()
-    translator = VersionTranslator()
+    translator = SemVerTag2VersionConverter()
     tagrefs = [repo.tag(tag) for tag in tags]
     actual = [t.name for t, _ in tags_and_versions(tagrefs, translator)]
     assert sorted_tags == actual
@@ -213,7 +213,7 @@ def test_tags_and_versions_ignores_invalid_tags_as_versions(
     valid_tags: Sequence[str],
 ):
     repo = Repo()
-    translator = VersionTranslator(tag_format=tag_format)
+    translator = SemVerTag2VersionConverter(tag_format=tag_format)
     tagrefs = [repo.tag(tag) for tag in (*valid_tags, *invalid_tags)]
     actual = [t.name for t, _ in tags_and_versions(tagrefs, translator)]
     assert set(valid_tags) == set(actual)

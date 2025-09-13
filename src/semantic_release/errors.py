@@ -1,4 +1,10 @@
 """Custom Errors"""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from semantic_release.version.version import Version
 
 
 class SemanticReleaseBaseError(Exception):
@@ -106,3 +112,12 @@ class GitTagError(SemanticReleaseBaseError):
 
 class GitPushError(SemanticReleaseBaseError):
     """Raised when there is a failure to push to the git remote."""
+
+class NoVersionBump(SemanticReleaseBaseError):
+    """
+    Raised when no version bump is detected in the commit history.
+    This can happen if there are no commits that would trigger a version change.
+    """
+    def __init__(self, current_version: Version, message: str):
+        super().__init__(message)
+        self.current_version = current_version

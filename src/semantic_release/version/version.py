@@ -200,6 +200,10 @@ class Version:
             + ")"
         )
 
+    def add_build_metadata(self, build_metadata: str) -> Version:
+        self.build_metadata = build_metadata
+        return self
+
     def as_tag(self) -> str:
         return self.tag_format.format(version=str(self))
 

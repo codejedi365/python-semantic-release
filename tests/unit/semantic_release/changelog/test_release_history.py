@@ -8,7 +8,7 @@ from git import Actor
 from pytest_lazy_fixtures.lazy_fixture import lf as lazy_fixture
 
 from semantic_release.changelog.release_history import ReleaseHistory
-from semantic_release.version.translator import VersionTranslator
+from semantic_release.version.translator import SemVerTag2VersionConverter
 from semantic_release.version.version import Version
 
 from tests.const import COMMIT_MESSAGE, CONVENTIONAL_COMMITS_MINOR
@@ -140,7 +140,7 @@ def test_release_history(
         map(str, expected_release_history.released.keys())
     )
 
-    translator = VersionTranslator()
+    translator = SemVerTag2VersionConverter()
     # Nothing has unreleased commits currently
     history = ReleaseHistory.from_git_history(
         repo,
@@ -244,7 +244,7 @@ def test_release_history_releases(
     actor = Actor("semantic-release", "semantic-release")
     release_history = ReleaseHistory.from_git_history(
         repo=repo_result["repo"],
-        translator=VersionTranslator(),
+        translator=SemVerTag2VersionConverter(),
         commit_parser=default_conventional_parser,  # type: ignore[arg-type]
     )
     tagged_date = datetime.now()
@@ -293,7 +293,7 @@ def test_all_matching_repo_tags_are_released(
     repo_result: BuiltRepoResult, default_conventional_parser: ConventionalCommitParser
 ):
     repo = repo_result["repo"]
-    translator = VersionTranslator()
+    translator = SemVerTag2VersionConverter()
     release_history = ReleaseHistory.from_git_history(
         repo=repo,
         translator=translator,

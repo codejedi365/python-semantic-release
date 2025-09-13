@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
         ParseResult,
         ParserOptions,
     )
-    from semantic_release.version.translator import VersionTranslator
+    from semantic_release.version.translator import SemVerTag2VersionConverter
     from semantic_release.version.version import Version
 
 
@@ -35,7 +35,7 @@ class ReleaseHistory:
     def from_git_history(
         cls,
         repo: Repo,
-        translator: VersionTranslator,
+        translator: SemVerTag2VersionConverter,
         commit_parser: CommitParser[ParseResult, ParserOptions],
         exclude_commit_patterns: Iterable[Pattern[str]] = (),
     ) -> ReleaseHistory:
