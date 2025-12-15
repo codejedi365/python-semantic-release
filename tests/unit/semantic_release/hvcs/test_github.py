@@ -1151,10 +1151,11 @@ def test_upload_dists_fails_with_http_error(
 
         # Verify the error message contains useful information about failed uploads
         error_msg = str(exc_info.value)
-        # Each file should be mentioned in the error message
+        # Each file should be mentioned in the error message with status code
         for file in files:
             assert f"failed to upload asset {file}" in error_msg
             assert f"release {release_id}" in error_msg
+            assert f"(HTTP {status_code})" in error_msg
 
 
 def test_upload_dists_fails_authentication_error_401(default_gh_client: Github):
@@ -1189,11 +1190,12 @@ def test_upload_dists_fails_authentication_error_401(default_gh_client: Github):
         with pytest.raises(AssetUploadError) as exc_info:
             default_gh_client.upload_dists(tag, glob_pattern)
 
-        # Verify the error message contains file and release information
+        # Verify the error message contains file, release information and status code
         error_msg = str(exc_info.value)
         assert "failed to upload asset" in error_msg
         assert files[0] in error_msg
         assert str(release_id) in error_msg
+        assert "(HTTP 401)" in error_msg
 
 
 def test_upload_dists_fails_forbidden_error_403(default_gh_client: Github):
@@ -1208,7 +1210,9 @@ def test_upload_dists_fails_forbidden_error_403(default_gh_client: Github):
     http_error = HTTPError("403 Client Error: Forbidden")
     http_error.response = Response()
     http_error.response.status_code = 403
-    http_error.response._content = b'{"message": "Resource not accessible by integration"}'
+    http_error.response._content = (
+        b'{"message": "Resource not accessible by integration"}'
+    )
 
     # Skip filesystem checks
     mocked_isfile = mock.patch.object(os.path, "isfile", return_value=True)
@@ -1228,11 +1232,12 @@ def test_upload_dists_fails_forbidden_error_403(default_gh_client: Github):
         with pytest.raises(AssetUploadError) as exc_info:
             default_gh_client.upload_dists(tag, glob_pattern)
 
-        # Verify the error message contains file and release information
+        # Verify the error message contains file, release information and status code
         error_msg = str(exc_info.value)
         assert "failed to upload asset" in error_msg
         assert files[0] in error_msg
         assert str(release_id) in error_msg
+        assert "(HTTP 403)" in error_msg
 
 
 def test_upload_dists_partial_failure(default_gh_client: Github):
@@ -1240,7 +1245,11 @@ def test_upload_dists_partial_failure(default_gh_client: Github):
     # Setup
     release_id = 999
     tag = "v4.0.0"
-    files = ["dist/package-4.0.0.whl", "dist/package-4.0.0.tar.gz", "dist/package-4.0.0-py3-none-any.whl"]
+    files = [
+        "dist/package-4.0.0.whl",
+        "dist/package-4.0.0.tar.gz",
+        "dist/package-4.0.0-py3-none-any.whl",
+    ]
     glob_pattern = "dist/*"
 
     # Create mock HTTPError for the second file
@@ -1271,11 +1280,12 @@ def test_upload_dists_partial_failure(default_gh_client: Github):
         # Verify all uploads were attempted
         assert mock_upload_release_asset.call_count == len(files)
 
-        # Verify the error message mentions the failed files
+        # Verify the error message mentions the failed files with status code
         error_msg = str(exc_info.value)
         assert files[1] in error_msg
         assert files[2] in error_msg
         assert str(release_id) in error_msg
+        assert "(HTTP 500)" in error_msg
 
 
 def test_upload_dists_all_succeed(default_gh_client: Github):
