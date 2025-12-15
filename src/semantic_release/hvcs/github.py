@@ -463,6 +463,7 @@ class Github(RemoteHvcsBase):
 
         # Upload assets
         n_succeeded = 0
+        errors = []
         for file_path in (
             f for f in glob.glob(dist_glob, recursive=True) if os.path.isfile(f)
         ):
@@ -471,6 +472,12 @@ class Github(RemoteHvcsBase):
                 n_succeeded += 1
             except HTTPError:  # noqa: PERF203
                 logger.exception("error uploading asset %s", file_path)
+                errors.append(
+                    f"failed to upload asset {file_path} to release {release_id}"
+                )
+
+        if errors:
+            raise AssetUploadError("\n".join(errors))
 
         return n_succeeded
 
