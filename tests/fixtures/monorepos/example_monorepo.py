@@ -152,8 +152,8 @@ def cached_example_monorepo(
             abs_filepath = cached_project_path.joinpath(file).resolve()
             # make sure the parent directory exists
             abs_filepath.parent.mkdir(parents=True, exist_ok=True)
-            # write file contents
-            abs_filepath.write_text(contents)
+            # write file contents (force LF-only to avoid CRLF issues on Windows)
+            abs_filepath.write_text(contents, newline="\n")
 
         config_updates: list[tuple[str, Any, Path]] = [
             (
