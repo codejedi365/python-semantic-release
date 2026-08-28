@@ -112,16 +112,14 @@ jobs:
 
       - name: Build | Build next version artifacts
         id: version
-        uses: python-semantic-release/python-semantic-release@39dd2052f2ce8282a5d932c31d58a2ca06d2550e  # v10.6.1
-        with:
-          github_token: ""
-          verbosity: 1
-          build: true
-          changelog: true
-          commit: false
-          push: false
-          tag: false
-          vcs_release: false
+        env:
+          GH_TOKEN: ""
+        run: |
+          semantic-release -v version --changelog \
+            --no-commit \
+            --no-push \
+            --no-tag \
+            --no-vcs-release
 
       - name: Build | Annotate next version
         if: steps.version.outputs.released == 'true'
