@@ -94,7 +94,7 @@ jobs:
       # Since the test suite takes ~4 minutes to complete on windows, and windows is billed higher
       # we are only going to run it on the oldest version of python we support. The older version
       # will be the most likely area to fail as newer minor versions maintain compatibility.
-      python-versions-windows: '["3.8"]'
+      python-versions-windows: '["3.8", "3.14"]'
       files-changed: ${{ needs.eval-changes.outputs.any-file-changes }}
       build-files-changed: ${{ needs.eval-changes.outputs.build-changes }}
       ci-files-changed: ${{ needs.eval-changes.outputs.ci-changes }}
