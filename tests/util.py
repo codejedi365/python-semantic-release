@@ -61,6 +61,16 @@ def assert_exit_code(
     if result.exit_code == exit_code:
         return True
 
+    output_section = (
+        [
+            "",
+            "Captured output:",
+            indent(result.output or "(empty)", " " * 2),
+        ]
+        if result.output
+        else []
+    )
+
     raise AssertionError(
         str.join(
             os.linesep,
@@ -70,6 +80,7 @@ def assert_exit_code(
                 # Explain what command failed
                 "Unexpected exit code from command:",
                 indent(f"'{str.join(' ', cli_cmd)}'", " " * 2),
+                *output_section,
             ],
         )
     )
