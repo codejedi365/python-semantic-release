@@ -11,6 +11,9 @@ on:
 # default token permissions = none
 permissions: {}
 
+env:
+  COMMON_PYTHON_VERSION: '3.11'
+
 
 jobs:
 
@@ -131,6 +134,12 @@ jobs:
           name: ${{ needs.validate.outputs.distribution-artifacts }}
           path: dist
 
+      - name: Setup | Install Python ${{ env.COMMON_PYTHON_VERSION }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: ${{ env.COMMON_PYTHON_VERSION }}
+          cache: 'pip'
+
       - name: Release | Bump Version in Docs
         if: needs.validate.outputs.new-release-is-prerelease == 'false'
         env:
@@ -140,13 +149,17 @@ jobs:
           python -m scripts.bump_version_in_docs
           git add docs/*
 
+      - name: Setup | Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e .
+
       - name: Release | Python Semantic Release
         id: release
-        uses: python-semantic-release/python-semantic-release@39dd2052f2ce8282a5d932c31d58a2ca06d2550e  # v10.6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          verbosity: 1
-          build: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          semantic-release -v version --skip-build
 
       - name: Release | Add distribution artifacts to GitHub Release Assets
         uses: python-semantic-release/publish-action@5a5718ce47b892ef699f2972dae122297771d641  # v10.6.1
