@@ -300,7 +300,7 @@ jobs:
     strategy:
       matrix:
         python-version: ${{ fromJson(inputs.python-versions-windows) }}
-        os: [windows-latest]
+        os: [windows-2025]
 
     steps:
       - name: Setup | Checkout Repository
@@ -364,15 +364,20 @@ jobs:
       - name: Test | Run pytest -m e2e
         id: tests
         shell: pwsh
-
         # env:
           # Required for GitPython to work on Windows because of getpass.getuser()
           # USERNAME: "runneradmin"
           # COLUMNS: 150
+          # NO_COLOR: "1"
+          # TERM: dumb
+          # PYTHONIOENCODING: utf-8
           # Because GHA is currently broken on Windows to pass these variables, we do it manually
         run: |
           $env:USERNAME = "runneradmin"
           $env:COLUMNS = 150
+          $env:NO_COLOR = "1"
+          $env:TERM = "dumb"
+          $env:PYTHONIOENCODING = "utf-8"
           pytest                                                                  `
             -vv                                                                   `
             -n 2                                                                  `
